@@ -1,12 +1,12 @@
-# Purpose
+### Purpose
 1. To practice building a reusable, modular JavaBean that can handle financial records (income and expenses).
 2. To apply CRUD operations (Create, Read, Update, Delete) with data persistence using serialization.
 
-# Background
+### Background
 1. In Component-Based Software Engineering (CBSE), components must be reusable, stateful, and modular.
 2. Your bean will manage financial records and computations while storing/retrieving data persistently.
 
-# Objectives
+### Objectives
 By the end, you should be able to:
 Develop a non-visual JavaBean following JavaBean conventions.
 Implement CRUD operations for financial data.
