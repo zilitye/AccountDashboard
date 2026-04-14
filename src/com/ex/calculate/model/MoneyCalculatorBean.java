@@ -1,4 +1,4 @@
-package src.com.ex.calculate;
+package src.com.ex.calculate.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;

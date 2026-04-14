@@ -1,6 +1,6 @@
 import java.util.Scanner;
 
-import src.com.ex.calculate.MoneyCalculatorBean;
+import src.com.ex.calculate.model.MoneyCalculatorBean;
 
 public class Main {
     public static void main(String[] args) {
