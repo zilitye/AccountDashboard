@@ -1,6 +1,6 @@
-# MoneyCalculatorBean
-Purpose
+# Purpose
 To practice building a reusable, modular JavaBean that can handle financial records (income and expenses).
+
 To apply CRUD operations (Create, Read, Update, Delete) with data persistence using serialization.
 
 Background
