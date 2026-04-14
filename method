@@ -1,0 +1,61 @@
+package com.ex.calculate;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+
+/**
+ * MoneyCalculatorBean
+ * A non-visual JavaBean for financial calculations
+ */
+public class MoneyCalculatorBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    // Default constructor (no-argument)
+    public MoneyCalculatorBean() {
+    }
+
+    /**
+     * Compute total income
+     * @param incomeArray array of income values
+     * @return total income
+     */
+    public int computeTotalIncome(int[] incomeArray) {
+        int total = 0;
+        for (int income : incomeArray) {
+            total += income;
+        }
+        return total;
+    }
+
+    /**
+     * Compute total expenses
+     * @param expenseArray array of expense values
+     * @return total expenses
+     */
+    public int computeTotalExpenses(int[] expenseArray) {
+        int total = 0;
+        for (int expense : expenseArray) {
+            total += expense;
+        }
+        return total;
+    }
+
+    /**
+     * Add a new expense to existing array
+     * @param existingExpenses current expense array
+     * @param newExpense new expense value
+     * @return updated expense array
+     */
+    public int[] computeAverageExpenses(int[] existingExpenses, int newExpense) {
+        int[] updatedArray = new int[existingExpenses.length + 1];
+
+        for (int i = 0; i < existingExpenses.length; i++) {
+            updatedArray[i] = existingExpenses[i];
+        }
+
+        updatedArray[existingExpenses.length] = newExpense;
+
+        return updatedArray;
+    }
+}
