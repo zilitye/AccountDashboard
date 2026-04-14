@@ -29,12 +29,12 @@ You must create:
 - computeTotalIncome(int[] income)
 - Input: array of integers
 - Output: integer (sum of all income values)
-- Example: [100, 200, 300] → 600
+    - Example: [100, 200, 300] → 600
 - computeTotalExpenses(int[] expenses)
 - Input: array of integers
 - Output: integer (sum of all expense values)
-- Example: [50, 30, 20] → 100
+    - Example: [50, 30, 20] → 100
 - computeAverageExpenses(int[] expenses, int newExpense)
 - Input: existing array + new value
 - Output: updated array with new expense added
-- Example: [50, 30] + 20 → [50, 30, 20]
+    - Example: [50, 30] + 20 → [50, 30, 20]
