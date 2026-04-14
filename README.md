@@ -19,22 +19,22 @@ By the end, you should be able to:
 You must create:
 1. Class name: com.ex.calculate.MoneyCalculatorBean
 
-Requirements:
-No-argument constructor
-Implements Serializable
-Imports necessary packages
-Acts as a non-visual component
+### Requirements:
+1. No-argument constructor
+2. Implements Serializable
+3. Imports necessary packages
+4. Acts as a non-visual component
 
-Required Methods
-computeTotalIncome(int[] income)
-Input: array of integers
-Output: integer (sum of all income values)
-Example: [100, 200, 300] → 600
-computeTotalExpenses(int[] expenses)
-Input: array of integers
-Output: integer (sum of all expense values)
-Example: [50, 30, 20] → 100
-computeAverageExpenses(int[] expenses, int newExpense)
-Input: existing array + new value
-Output: updated array with new expense added
-Example: [50, 30] + 20 → [50, 30, 20]
+### Required Methods
+- computeTotalIncome(int[] income)
+- Input: array of integers
+- Output: integer (sum of all income values)
+- Example: [100, 200, 300] → 600
+- computeTotalExpenses(int[] expenses)
+- Input: array of integers
+- Output: integer (sum of all expense values)
+- Example: [50, 30, 20] → 100
+- computeAverageExpenses(int[] expenses, int newExpense)
+- Input: existing array + new value
+- Output: updated array with new expense added
+- Example: [50, 30] + 20 → [50, 30, 20]
