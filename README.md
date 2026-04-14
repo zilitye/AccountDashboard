@@ -8,16 +8,17 @@
 
 ### Objectives
 By the end, you should be able to:
-Develop a non-visual JavaBean following JavaBean conventions.
-Implement CRUD operations for financial data.
-Compute totals for income and expenses.
-Implement persistence with the Serializable interface.
-Manage data using arrays or ArrayList.
-Generate documentation with Javadoc and package the component.
+1. Develop a non-visual JavaBean following JavaBean conventions.
+2. Implement CRUD operations for financial data.
+3. Compute totals for income and expenses.
+4. Implement persistence with the Serializable interface.
+5. Manage data using arrays or ArrayList.
+6. Generate documentation with Javadoc and package the component.
 
-Instructions
+### Instructions
 You must create:
-Class name: com.ex.calculate.MoneyCalculatorBean
+1. Class name: com.ex.calculate.MoneyCalculatorBean
+
 Requirements:
 No-argument constructor
 Implements Serializable
