@@ -36,16 +36,17 @@ com.ex.calculator='C:/Users/User/Documents/GitHub/MoneyCalculatorBean/moneycalcu
 'moneycalculatorbean 1.0.0 API'
 com.ex.calculator
 'C:/Users/User/Documents/GitHub/MoneyCalculatorBean/moneycalculatorbean/src/main/java/module-info.java'
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\allclasses-index.html = 1776221996313
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\allpackages-index.html = 1776221996315
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\element-list = 1776221996245
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\help-doc.html = 1776221996342
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\index-all.html = 1776221996331
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\index.html = 1776221996335
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\member-search-index.js = 1776221996319
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\module-search-index.js = 1776221996316
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\overview-tree.html = 1776221996303
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\package-search-index.js = 1776221996317
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\search.html = 1776221996333
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\tag-search-index.js = 1776221996321
-C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\type-search-index.js = 1776221996318
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\allclasses-index.html = 1776223314513
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\allpackages-index.html = 1776223314517
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\element-list = 1776223314408
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\help-doc.html = 1776223314548
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\index-all.html = 1776223314535
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\index.html = 1776223314541
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\member-search-index.js = 1776223314521
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\module-search-index.js = 1776223314519
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\overview-tree.html = 1776223314501
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\package-search-index.js = 1776223314520
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\search.html = 1776223314538
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\serialized-form.html = 1776223314466
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\tag-search-index.js = 1776223314523
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\type-search-index.js = 1776223314521
