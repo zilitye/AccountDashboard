@@ -1,12 +1,23 @@
 package com.ex.calculator;
 
-import java.io.IOException;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 
 public class SecondaryController {
+    private MoneyCalculatorBean bean;
 
-    @FXML
-    private void switchToPrimary() throws IOException {
-        App.setRoot("primary");
+    @FXML private Label averageExpensesLabel;
+
+    public void setBean(MoneyCalculatorBean bean) {
+        this.bean = bean;
+        updateReport();
+    }
+
+    private void updateReport() {
+        if (bean != null) {
+            averageExpensesLabel.setText("Average Expenses: " +
+                bean.computeAverageExpenses(bean.getExpenses().stream().mapToInt(Integer::intValue).toArray())
+            );
+        }
     }
 }
