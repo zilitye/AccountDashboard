@@ -1,0 +1,51 @@
+-J-Duser.language=
+-J-Duser.country=
+@options
+@packages
+@argfile
+--no-fonts
+--class-path
+'C:/Users/User/.m2/repository/org/openjfx/javafx-controls/13/javafx-controls-13.jar;C:/Users/User/.m2/repository/org/openjfx/javafx-graphics/13/javafx-graphics-13.jar;C:/Users/User/.m2/repository/org/openjfx/javafx-base/13/javafx-base-13.jar;C:/Users/User/.m2/repository/org/openjfx/javafx-fxml/13/javafx-fxml-13.jar'
+--module-path
+'C:/Users/User/.m2/repository/org/openjfx/javafx-graphics/13/javafx-graphics-13-win.jar;C:/Users/User/.m2/repository/org/openjfx/javafx-fxml/13/javafx-fxml-13-win.jar;C:/Users/User/.m2/repository/org/openjfx/javafx-controls/13/javafx-controls-13-win.jar;C:/Users/User/Documents/GitHub/MoneyCalculatorBean/moneycalculatorbean/target/classes;C:/Users/User/.m2/repository/org/openjfx/javafx-base/13/javafx-base-13-win.jar'
+--patch-module
+com.ex.calculator='C:/Users/User/Documents/GitHub/MoneyCalculatorBean/moneycalculatorbean/src/main/java'
+-encoding
+'UTF-8'
+-protected
+-source
+'11'
+--module-source-path
+'C:/Users/User/Documents/GitHub/MoneyCalculatorBean/moneycalculatorbean/target/reports/apidocs/src'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'C:/Users/User/Documents/GitHub/MoneyCalculatorBean/moneycalculatorbean/target/reports/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'moneycalculatorbean 1.0.0 API'
+-linkoffline
+'https://docs.oracle.com/en/java/javase/11/docs/api' 'C:/Users/User/Documents/GitHub/MoneyCalculatorBean/moneycalculatorbean/target/javadoc-bundle-options'
+-use
+-version
+-windowtitle
+'moneycalculatorbean 1.0.0 API'
+com.ex.calculator
+'C:/Users/User/Documents/GitHub/MoneyCalculatorBean/moneycalculatorbean/src/main/java/module-info.java'
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\allclasses-index.html = 1776221996313
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\allpackages-index.html = 1776221996315
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\element-list = 1776221996245
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\help-doc.html = 1776221996342
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\index-all.html = 1776221996331
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\index.html = 1776221996335
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\member-search-index.js = 1776221996319
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\module-search-index.js = 1776221996316
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\overview-tree.html = 1776221996303
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\package-search-index.js = 1776221996317
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\search.html = 1776221996333
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\tag-search-index.js = 1776221996321
+C:\Users\User\Documents\GitHub\MoneyCalculatorBean\moneycalculatorbean\target\reports\apidocs\type-search-index.js = 1776221996318
