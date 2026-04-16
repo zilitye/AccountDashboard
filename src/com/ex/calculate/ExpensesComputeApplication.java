@@ -45,7 +45,7 @@ public class ExpensesComputeApplication extends JFrame {
         topBar.setBackground(new Color(25, 25, 25));
         topBar.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("💰 Account Dashboard");
+        JLabel titleLabel = new JLabel("Account Dashboard");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titleLabel.setForeground(Color.WHITE);
         topBar.add(titleLabel, BorderLayout.WEST);
