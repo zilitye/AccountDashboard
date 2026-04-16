@@ -1,54 +1,95 @@
 package com.ex.calculate;
 
+import chart.SQLConnection;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ExpensesCompute implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private List<Expense> expenses;
-
-    public ExpensesCompute() {
-        expenses = new ArrayList<>();
+    // Insert new expense into DB
+    public void addExpense(int year, int month, String category, double amount) {
+        try (Connection conn = SQLConnection.getInstance().getConnection()) {
+            String sql = "INSERT INTO expenses(year, month, category, amount) VALUES(?,?,?,?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, year);
+            ps.setInt(2, month);
+            ps.setString(3, category);
+            ps.setDouble(4, amount);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void addExpense(Expense e) {
-        expenses.add(e);
-    }
-
+    // Yearly total
     public double getYearlyTotal(int year) {
-        return expenses.stream()
-                .filter(e -> e.getYear() == year)
-                .mapToDouble(Expense::getAmount)
-                .sum();
+        double total = 0;
+        try (Connection conn = SQLConnection.getInstance().getConnection()) {
+            String sql = "SELECT SUM(amount) FROM expenses WHERE year=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, year);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) total = rs.getDouble(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return total;
     }
 
+    // Monthly total
     public double getMonthlyTotal(int year, int month) {
-        return expenses.stream()
-                .filter(e -> e.getYear() == year && e.getMonth() == month)
-                .mapToDouble(Expense::getAmount)
-                .sum();
+        double total = 0;
+        try (Connection conn = SQLConnection.getInstance().getConnection()) {
+            String sql = "SELECT SUM(amount) FROM expenses WHERE year=? AND month=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, year);
+            ps.setInt(2, month);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) total = rs.getDouble(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return total;
     }
 
-    public double getCategoryTotal(int year, String category) {
-        return expenses.stream()
-                .filter(e -> e.getYear() == year && e.getCategory().equalsIgnoreCase(category))
-                .mapToDouble(Expense::getAmount)
-                .sum();
+    // Totals by category (works for yearly or monthly)
+    public Map<String, Double> getTotalsByCategory(int year, Integer month) {
+        Map<String, Double> totals = new HashMap<>();
+        try (Connection conn = SQLConnection.getInstance().getConnection()) {
+            String sql = "SELECT category, SUM(amount) FROM expenses WHERE year=?"
+                       + (month != null ? " AND month=?" : "")
+                       + " GROUP BY category";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, year);
+            if (month != null) ps.setInt(2, month);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                totals.put(rs.getString(1), rs.getDouble(2));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return totals;
     }
 
+    // Average monthly expenses
     public double getAverageMonthlyExpenses(int year) {
         return getYearlyTotal(year) / 12.0;
     }
 
-    public double compareMonths(int year, int month1, int month2) {
-        return getMonthlyTotal(year, month2) - getMonthlyTotal(year, month1);
+    // Month-to-month comparison percentage
+    public double getMonthComparison(int year, int month1, int month2) {
+        double total1 = getMonthlyTotal(year, month1);
+        double total2 = getMonthlyTotal(year, month2);
+        if (total1 == 0) return 0;
+        return ((total2 - total1) / total1) * 100.0;
     }
 
-    public double percentageChange(int year, int month1, int month2) {
-        double first = getMonthlyTotal(year, month1);
-        double second = getMonthlyTotal(year, month2);
-        return (second - first) / first * 100.0;
+    public Map<Integer, Double> getMonthlyTotals(int year) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getMonthlyTotals'");
     }
 }

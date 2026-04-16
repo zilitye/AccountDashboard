@@ -1,47 +1,57 @@
 package chart;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 
-import javax.swing.JPanel;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.Map;
 
 public class ChartBar {
 
-    public JPanel createBarChart() {
+    // Bar chart for category breakdown (monthly or yearly)
+    public static JFreeChart createCategoryBarChart(Map<String, Double> categoryTotals, String title, String xLabel, String yLabel) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
-        try {
-            Connection conn = SQLConnection.getInstance().getConnection();
-            Statement stmt = conn.createStatement();
-
-            // Example query: adjust table/column names to match your DB schema
-            String query = "SELECT month, category, amount FROM expenses WHERE year = 2026";
-            ResultSet rs = stmt.executeQuery(query);
-
-            while (rs.next()) {
-                String month = rs.getString("month");
-                String category = rs.getString("category");
-                double amount = rs.getDouble("amount");
-
-                dataset.addValue(amount, category, month);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (Map.Entry<String, Double> entry : categoryTotals.entrySet()) {
+            dataset.addValue(entry.getValue(), "Expenses", entry.getKey());
         }
 
-        JFreeChart barChart = ChartFactory.createBarChart(
-                "Monthly Expenses",
-                "Category",
+        return ChartFactory.createBarChart(
+                title,      // Chart title
+                xLabel,     // X-axis label
+                yLabel,     // Y-axis label
+                dataset     // Dataset
+        );
+    }
+
+    // Bar chart for month-to-month comparison
+    public static JFreeChart createMonthComparisonChart(double month1Total, double month2Total, int month1, int month2, int year) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        dataset.addValue(month1Total, "Expenses", "Month " + month1);
+        dataset.addValue(month2Total, "Expenses", "Month " + month2);
+
+        return ChartFactory.createBarChart(
+                "Comparison of " + month1 + " vs " + month2 + " (" + year + ")",
+                "Month",
                 "Amount",
                 dataset
         );
+    }
 
-        return new ChartPanel(barChart);
+    // General bar chart for yearly totals (optional extension)
+    public static JFreeChart createYearlyBarChart(Map<Integer, Double> yearlyTotals) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        for (Map.Entry<Integer, Double> entry : yearlyTotals.entrySet()) {
+            dataset.addValue(entry.getValue(), "Expenses", String.valueOf(entry.getKey()));
+        }
+
+        return ChartFactory.createBarChart(
+                "Yearly Expenses",
+                "Year",
+                "Amount",
+                dataset
+        );
     }
 }

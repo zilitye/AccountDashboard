@@ -1,47 +1,58 @@
 package chart;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 
-import javax.swing.JPanel;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.Map;
 
 public class ChartLine {
 
-    public JPanel createLineChart() {
+    // Line chart for monthly expenses trend in a given year
+    public static JFreeChart createMonthlyTrendChart(Map<Integer, Double> monthlyTotals, int year) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
-        try {
-            Connection conn = SQLConnection.getInstance().getConnection();
-            Statement stmt = conn.createStatement();
-
-            // Example query: adjust table/column names to match your DB schema
-            String query = "SELECT month, category, amount FROM expenses WHERE year = 2026";
-            ResultSet rs = stmt.executeQuery(query);
-
-            while (rs.next()) {
-                String month = rs.getString("month");
-                String category = rs.getString("category");
-                double amount = rs.getDouble("amount");
-
-                dataset.addValue(amount, category, month);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (Map.Entry<Integer, Double> entry : monthlyTotals.entrySet()) {
+            dataset.addValue(entry.getValue(), "Expenses", "Month " + entry.getKey());
         }
 
-        JFreeChart lineChart = ChartFactory.createLineChart(
-                "Monthly Expenses Trend",
+        return ChartFactory.createLineChart(
+                "Monthly Expenses Trend (" + year + ")",
                 "Month",
                 "Amount",
                 dataset
         );
+    }
 
-        return new ChartPanel(lineChart);
+    // Line chart for yearly expenses trend across multiple years
+    public static JFreeChart createYearlyTrendChart(Map<Integer, Double> yearlyTotals) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        for (Map.Entry<Integer, Double> entry : yearlyTotals.entrySet()) {
+            dataset.addValue(entry.getValue(), "Expenses", String.valueOf(entry.getKey()));
+        }
+
+        return ChartFactory.createLineChart(
+                "Yearly Expenses Trend",
+                "Year",
+                "Amount",
+                dataset
+        );
+    }
+
+    // Line chart for category-specific monthly trend
+    public static JFreeChart createCategoryTrendChart(Map<Integer, Double> monthlyCategoryTotals, int year, String category) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        for (Map.Entry<Integer, Double> entry : monthlyCategoryTotals.entrySet()) {
+            dataset.addValue(entry.getValue(), category, "Month " + entry.getKey());
+        }
+
+        return ChartFactory.createLineChart(
+                "Monthly Trend for " + category + " (" + year + ")",
+                "Month",
+                "Amount",
+                dataset
+        );
     }
 }

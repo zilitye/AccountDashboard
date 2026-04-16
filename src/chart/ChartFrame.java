@@ -1,35 +1,36 @@
 package chart;
 
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-import javax.swing.JPanel;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
 
-public class ChartFrame extends JFrame {
+import javax.swing.*;
+import java.awt.*;
 
-    public ChartFrame(String chartType) {
-        setTitle("Account Dashboard");
-        setSize(800, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+public class ChartFrame extends JPanel {
+    private ChartPanel chartPanel;
 
-        JPanel chartPanel;
-
-        // Decide which chart to show
-        if ("bar".equalsIgnoreCase(chartType)) {
-            ChartBar chartBar = new ChartBar();
-            chartPanel = chartBar.createBarChart();
-        } else {
-            ChartLine chartLine = new ChartLine();
-            chartPanel = chartLine.createLineChart();
-        }
-
-        add(chartPanel);
+    // Constructor accepts a JFreeChart object
+    public ChartFrame(JFreeChart chart) {
+        setLayout(new BorderLayout());
+        chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(700, 500));
+        chartPanel.setMouseWheelEnabled(true); // zoom with mouse wheel
+        add(chartPanel, BorderLayout.CENTER);
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            // Change "bar" to "line" to switch chart type
-            ChartFrame frame = new ChartFrame("bar");
-            frame.setVisible(true);
-        });
+    // Method to update chart dynamically
+    public void setChart(JFreeChart chart) {
+        remove(chartPanel);
+        chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(700, 500));
+        chartPanel.setMouseWheelEnabled(true);
+        add(chartPanel, BorderLayout.CENTER);
+        revalidate();
+        repaint();
+    }
+
+    // Optional: expose the chart panel for customization
+    public ChartPanel getChartPanel() {
+        return chartPanel;
     }
 }
