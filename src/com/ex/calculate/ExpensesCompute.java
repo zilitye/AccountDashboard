@@ -46,7 +46,7 @@ public class ExpensesCompute implements Serializable {
             String sql = "SELECT SUM(amount) FROM expenses WHERE year=? AND month=?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, year);
-            ps.setInt(2, month);
+            ps.setString(2, String.valueOf(month)); // Always set as string for VARCHAR2 column
             ResultSet rs = ps.executeQuery();
             if (rs.next()) total = rs.getDouble(1);
         } catch (SQLException e) {
@@ -64,7 +64,9 @@ public class ExpensesCompute implements Serializable {
                        + " GROUP BY category";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, year);
-            if (month != null) ps.setInt(2, month);
+            if (month != null) {
+                ps.setString(2, String.valueOf(month)); // Always set as string for VARCHAR2 column
+            }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 totals.put(rs.getString(1), rs.getDouble(2));
@@ -89,7 +91,45 @@ public class ExpensesCompute implements Serializable {
     }
 
     public Map<Integer, Double> getMonthlyTotals(int year) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getMonthlyTotals'");
+        Map<Integer, Double> totals = new HashMap<>();
+        try (Connection conn = SQLConnection.getInstance().getConnection()) {
+            String sql = "SELECT month, SUM(amount) FROM expenses WHERE year=? GROUP BY month ORDER BY month";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, year);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                // Handle both NUMBER and VARCHAR2 month columns
+                int month;
+                try {
+                    month = rs.getInt(1);
+                } catch (Exception e) {
+                    // If it's VARCHAR2, convert month name to number
+                    String monthStr = rs.getString(1);
+                    month = convertMonthNameToNumber(monthStr);
+                }
+                totals.put(month, rs.getDouble(2));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return totals;
+    }
+
+    private int convertMonthNameToNumber(String monthName) {
+        switch (monthName.toLowerCase()) {
+            case "january": case "jan": return 1;
+            case "february": case "feb": return 2;
+            case "march": case "mar": return 3;
+            case "april": case "apr": return 4;
+            case "may": return 5;
+            case "june": case "jun": return 6;
+            case "july": case "jul": return 7;
+            case "august": case "aug": return 8;
+            case "september": case "sep": return 9;
+            case "october": case "oct": return 10;
+            case "november": case "nov": return 11;
+            case "december": case "dec": return 12;
+            default: return Integer.parseInt(monthName); // fallback for numeric strings
+        }
     }
 }
