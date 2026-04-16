@@ -43,13 +43,31 @@ public class ExpensesCompute implements Serializable {
     public double getMonthlyTotal(int year, int month) {
         double total = 0;
         try (Connection conn = SQLConnection.getInstance().getConnection()) {
-            String sql = "SELECT SUM(amount) FROM expenses WHERE year=? AND month=?";
+            // Query all months for the year, then filter in Java
+            String sql = "SELECT month, SUM(amount) as monthly_sum FROM expenses WHERE year=? GROUP BY month";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, year);
-            ps.setString(2, String.valueOf(month)); // Always set as string for VARCHAR2 column
+            System.out.println("[ExpensesCompute] Executing: " + sql + " with year=" + year + " (will filter for month=" + month + " in Java)");
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) total = rs.getDouble(1);
+            while (rs.next()) {
+                // Handle both NUMBER and VARCHAR2 month columns
+                int dbMonth;
+                try {
+                    dbMonth = rs.getInt(1);
+                } catch (Exception e) {
+                    String monthStr = rs.getString(1);
+                    dbMonth = convertMonthNameToNumber(monthStr);
+                }
+                
+                if (dbMonth == month) {
+                    total = rs.getDouble(2);
+                    System.out.println("[ExpensesCompute] Found month " + month + " with total: " + total);
+                    break;
+                }
+            }
+            System.out.println("[ExpensesCompute] Monthly total result for month " + month + ": " + total);
         } catch (SQLException e) {
+            System.err.println("[ExpensesCompute] ERROR in getMonthlyTotal for year=" + year + ", month=" + month);
             e.printStackTrace();
         }
         return total;
@@ -59,19 +77,46 @@ public class ExpensesCompute implements Serializable {
     public Map<String, Double> getTotalsByCategory(int year, Integer month) {
         Map<String, Double> totals = new HashMap<>();
         try (Connection conn = SQLConnection.getInstance().getConnection()) {
-            String sql = "SELECT category, SUM(amount) FROM expenses WHERE year=?"
-                       + (month != null ? " AND month=?" : "")
-                       + " GROUP BY category";
+            String sql;
+            if (month != null) {
+                // Get totals for all months, will filter by specific month in Java
+                sql = "SELECT category, month, SUM(amount) as category_sum FROM expenses WHERE year=? GROUP BY category, month ORDER BY month";
+            } else {
+                sql = "SELECT category, SUM(amount) as category_sum FROM expenses WHERE year=? GROUP BY category";
+            }
+            
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, year);
+            
             if (month != null) {
-                ps.setString(2, String.valueOf(month)); // Always set as string for VARCHAR2 column
+                System.out.println("[ExpensesCompute] Executing: " + sql + " with year=" + year + " (will filter for month=" + month + " in Java)");
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    String category = rs.getString(1);
+                    // Handle both NUMBER and VARCHAR2 month columns
+                    int dbMonth;
+                    try {
+                        dbMonth = rs.getInt(2);
+                    } catch (Exception e) {
+                        String monthStr = rs.getString(2);
+                        dbMonth = convertMonthNameToNumber(monthStr);
+                    }
+                    
+                    if (dbMonth == month) {
+                        double amount = rs.getDouble(3);
+                        totals.put(category, amount);
+                    }
+                }
+            } else {
+                System.out.println("[ExpensesCompute] Executing: " + sql + " with year=" + year);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    totals.put(rs.getString(1), rs.getDouble(2));
+                }
             }
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                totals.put(rs.getString(1), rs.getDouble(2));
-            }
+            System.out.println("[ExpensesCompute] Category totals result: " + totals);
         } catch (SQLException e) {
+            System.err.println("[ExpensesCompute] ERROR in getTotalsByCategory for year=" + year + ", month=" + month);
             e.printStackTrace();
         }
         return totals;

@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.time.LocalDate;
+import java.util.Map;
 
 public class ExpensesComputeApplication extends JFrame {
     private JComboBox<String> categoryBox;
@@ -154,7 +155,7 @@ public class ExpensesComputeApplication extends JFrame {
         card.add(currentMonthNameLabel, BorderLayout.NORTH);
 
         // Amount
-        currentMonthSpendingLabel = new JLabel("$ 0.00");
+        currentMonthSpendingLabel = new JLabel("RM 0.00");
         currentMonthSpendingLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
         currentMonthSpendingLabel.setForeground(new Color(25, 25, 25));
         currentMonthSpendingLabel.setHorizontalAlignment(JLabel.CENTER);
@@ -247,53 +248,70 @@ public class ExpensesComputeApplication extends JFrame {
         try {
             // Update current month spending
             double monthlyTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
-            currentMonthSpendingLabel.setText(String.format("$ %.2f", monthlyTotal));
+            System.out.println("[DEBUG] Monthly Total for " + selectedYear + "-" + selectedMonth + ": " + monthlyTotal);
+            currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
             currentMonthNameLabel.setText(monthSelector.getItemAt(selectedMonth - 1));
 
             JPanel chartDisplay = null;
 
             switch (selected) {
                 case "Monthly Breakdown":
+                    Map<String, Double> categoryData = compute.getTotalsByCategory(selectedYear, selectedMonth);
+                    System.out.println("[DEBUG] Category Data: " + categoryData);
                     JFreeChart barChart = ChartBar.createCategoryBarChart(
-                        compute.getTotalsByCategory(selectedYear, selectedMonth),
+                        categoryData,
                         "Monthly Breakdown",
                         "Category", "Amount"
                     );
+                    System.out.println("[DEBUG] Bar Chart created, adding to display...");
                     chartDisplay = new ChartFrame(barChart);
                     break;
 
                 case "Yearly Overview":
+                    Map<String, Double> yearlyData = compute.getTotalsByCategory(selectedYear, null);
+                    System.out.println("[DEBUG] Yearly Data: " + yearlyData);
                     JFreeChart yearlyPie = ChartPie.createYearlyPieChart(
-                        compute.getTotalsByCategory(selectedYear, null),
+                        yearlyData,
                         selectedYear
                     );
+                    System.out.println("[DEBUG] Yearly Pie Chart created, adding to display...");
                     chartDisplay = new ChartFrame(yearlyPie);
                     break;
 
                 case "Monthly Pie":
+                    Map<String, Double> monthlyData = compute.getTotalsByCategory(selectedYear, selectedMonth);
+                    System.out.println("[DEBUG] Monthly Pie Data: " + monthlyData);
                     JFreeChart monthlyPie = ChartPie.createMonthlyPieChart(
-                        compute.getTotalsByCategory(selectedYear, selectedMonth),
+                        monthlyData,
                         selectedYear, selectedMonth
                     );
+                    System.out.println("[DEBUG] Monthly Pie Chart created, adding to display...");
                     chartDisplay = new ChartFrame(monthlyPie);
                     break;
 
                 case "Month Comparison":
                     int prevMonth = (selectedMonth == 1) ? 12 : selectedMonth - 1;
                     int comparisonYear = (selectedMonth == 1) ? selectedYear - 1 : selectedYear;
+                    double prevMonthTotal = compute.getMonthlyTotal(comparisonYear, prevMonth);
+                    double currMonthTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
+                    System.out.println("[DEBUG] Month Comparison - Previous: " + prevMonthTotal + ", Current: " + currMonthTotal);
                     JFreeChart comparisonChart = ChartBar.createMonthComparisonChart(
-                        compute.getMonthlyTotal(comparisonYear, prevMonth),
-                        compute.getMonthlyTotal(selectedYear, selectedMonth),
+                        prevMonthTotal,
+                        currMonthTotal,
                         prevMonth, selectedMonth, selectedYear
                     );
+                    System.out.println("[DEBUG] Month Comparison Chart created, adding to display...");
                     chartDisplay = new ChartFrame(comparisonChart);
                     break;
 
                 case "Trend Analysis":
+                    Map<Integer, Double> trendData = compute.getMonthlyTotals(selectedYear);
+                    System.out.println("[DEBUG] Trend Data: " + trendData);
                     JFreeChart trendChart = ChartLine.createMonthlyTrendChart(
-                        compute.getMonthlyTotals(selectedYear),
+                        trendData,
                         selectedYear
                     );
+                    System.out.println("[DEBUG] Trend Chart created, adding to display...");
                     chartDisplay = new ChartFrame(trendChart);
                     break;
 
@@ -301,7 +319,8 @@ public class ExpensesComputeApplication extends JFrame {
                     JPanel avgPanel = new JPanel(new BorderLayout());
                     avgPanel.setBackground(Color.WHITE);
                     double avg = compute.getAverageMonthlyExpenses(selectedYear);
-                    JLabel avgLabel = new JLabel(String.format("$ %.2f", avg));
+                    System.out.println("[DEBUG] Average Monthly Expenses: " + avg);
+                    JLabel avgLabel = new JLabel(String.format("RM %.2f", avg));
                     avgLabel.setFont(new Font("Segoe UI", Font.BOLD, 48));
                     avgLabel.setHorizontalAlignment(JLabel.CENTER);
                     avgLabel.setForeground(new Color(25, 25, 25));
@@ -318,18 +337,26 @@ public class ExpensesComputeApplication extends JFrame {
             }
 
             if (chartDisplay != null) {
+                System.out.println("[DEBUG] Chart display is not null, adding to panel...");
                 chartPanel.add(chartDisplay, BorderLayout.CENTER);
+                chartPanel.revalidate();
+                chartPanel.repaint();
+                System.out.println("[DEBUG] Chart panel revalidated and repainted");
+            } else {
+                System.out.println("[DEBUG] ERROR: Chart display is null!");
+                JLabel noChartLabel = new JLabel("No chart available");
+                chartPanel.add(noChartLabel, BorderLayout.CENTER);
             }
         } catch (Exception ex) {
+            System.out.println("[DEBUG] Exception caught in updateChart: " + ex.getMessage());
+            ex.printStackTrace();
             JPanel errorPanel = new JPanel(new BorderLayout());
             errorPanel.setBackground(Color.WHITE);
-
             JLabel errorLabel = new JLabel("Database connection required. Please run accountdb.sql first.");
             errorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             errorLabel.setHorizontalAlignment(JLabel.CENTER);
             errorLabel.setForeground(new Color(150, 150, 150));
             errorPanel.add(errorLabel, BorderLayout.CENTER);
-
             chartPanel.add(errorPanel, BorderLayout.CENTER);
         }
 
