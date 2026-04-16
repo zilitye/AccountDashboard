@@ -11,7 +11,7 @@ import java.awt.event.ActionEvent;
 import java.time.LocalDate;
 
 public class ExpensesComputeApplication extends JFrame {
-    private JTextField categoryField;
+    private JComboBox<String> categoryBox;   // dropdown for categories
     private JTextField amountField;
     private JButton addButton;
     private JComboBox<String> chartTypeBox;
@@ -27,9 +27,18 @@ public class ExpensesComputeApplication extends JFrame {
 
         // Input panel
         JPanel inputPanel = new JPanel(new GridLayout(3, 2));
+
         inputPanel.add(new JLabel("Category:"));
-        categoryField = new JTextField();
-        inputPanel.add(categoryField);
+        categoryBox = new JComboBox<>(new String[]{
+            "Food",
+            "Utilities",
+            "Transport",
+            "Entertainment",
+            "Healthcare",
+            "Education",
+            "Others"
+        });
+        inputPanel.add(categoryBox);
 
         inputPanel.add(new JLabel("Amount:"));
         amountField = new JTextField();
@@ -65,7 +74,7 @@ public class ExpensesComputeApplication extends JFrame {
 
     private void handleAddExpense(ActionEvent e) {
         try {
-            String category = categoryField.getText();
+            String category = (String) categoryBox.getSelectedItem(); // dropdown value
             double amount = Double.parseDouble(amountField.getText());
 
             LocalDate now = LocalDate.now();
