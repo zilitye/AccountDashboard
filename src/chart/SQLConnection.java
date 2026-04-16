@@ -13,19 +13,19 @@ public class SQLConnection {
     // Private constructor prevents direct instantiation
     private SQLConnection() {
         try {
-            // Adjust DB name, user, and password to your setup
-            String url = "jdbc:mysql://localhost:3306/accountdb";
-            String user = "root";
-            String password = "password";
+            // Load Oracle JDBC driver
+            Class.forName("oracle.jdbc.OracleDriver");
 
-            // Load MySQL JDBC driver (optional in newer versions)
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            // Use SID = xe (or Service Name = xepdb1 if needed)
+            String url = "jdbc:oracle:thin:@LAPTOP-0DI29GMV:1521:xe";
+            String user = "system";
+            String password = "password";
 
             // Establish connection
             connection = DriverManager.getConnection(url, user, password);
             System.out.println("Database connected successfully!");
         } catch (ClassNotFoundException e) {
-            System.err.println("MySQL JDBC Driver not found.");
+            System.err.println("Oracle JDBC Driver not found.");
             e.printStackTrace();
         } catch (SQLException e) {
             System.err.println("Database connection failed.");
