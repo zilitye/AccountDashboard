@@ -1,11 +1,4 @@
--- Create a dedicated schema (optional, you can stay in SYSTEM if you prefer)
--- CREATE USER accountdb IDENTIFIED BY accountdb_password;
--- GRANT CONNECT, RESOURCE TO accountdb;
-
--- Switch to the schema (skip if staying in SYSTEM)
--- ALTER SESSION SET CURRENT_SCHEMA = accountdb;
-
--- Drop table if it already exists (optional cleanup)
+-- Drop table if it already exists
 BEGIN
    EXECUTE IMMEDIATE 'DROP TABLE expenses';
 EXCEPTION
@@ -28,10 +21,12 @@ CREATE TABLE expenses (
 -- Insert sample data for 2026
 INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Jan', 'Food & Beverages', 450);
 INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Jan', 'Entertainment', 100);
-INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Mac', 'Food & Beverages', 600);
-INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Mac', 'Entertainment', 130);
-INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Apr', 'Transport', 200);
-INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Apr', 'Utilities', 300);
+INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Feb', 'Transport', 200);
+INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Feb', 'Utilities', 300);
+INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Mar', 'Food & Beverages', 600);
+INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Mar', 'Entertainment', 130);
+INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Apr', 'Healthcare', 250);
+INSERT INTO expenses (year, month, category, amount) VALUES (2026, 'Apr', 'Transport', 180);
 
 -- Commit changes
 COMMIT;
