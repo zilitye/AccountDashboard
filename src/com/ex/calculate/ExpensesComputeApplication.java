@@ -6,10 +6,13 @@ import chart.ChartBar;
 import chart.ChartLine;
 
 import org.jfree.chart.JFreeChart;
+import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -17,351 +20,457 @@ public class ExpensesComputeApplication extends JFrame {
     private JComboBox<String> categoryBox;
     private JTextField amountField;
     private JButton addButton;
-    private JComboBox<String> chartTypeBox;
-    private JPanel chartPanel;
+    private JPanel chartLeftPanel;
+    private JPanel chartRightPanel;
     private JComboBox<String> monthSelector;
     private JLabel currentMonthSpendingLabel;
     private JLabel currentMonthNameLabel;
+    private JLabel averageExpensesLabel;
+    private JButton tabButtonMonth, tabButtonYear;
+    private int currentViewMode = 1; // 1=Month, 2=Year
 
     private ExpensesCompute compute;
     private int selectedYear = LocalDate.now().getYear();
     private int selectedMonth = LocalDate.now().getMonthValue();
 
+    // Light theme color palette
+    private static final Color COLOR_BACKGROUND  = new Color(245, 246, 250);
+    private static final Color COLOR_SURFACE     = new Color(255, 255, 255);
+    private static final Color COLOR_CARD        = new Color(255, 255, 255);
+    private static final Color COLOR_PRIMARY     = new Color(59, 130, 246);   // blue
+    private static final Color COLOR_ACCENT      = new Color(16, 185, 129);   // green
+    private static final Color COLOR_DANGER      = new Color(239, 68, 68);    // red
+    private static final Color COLOR_TEXT        = new Color(17, 24, 39);
+    private static final Color COLOR_TEXT_SEC    = new Color(107, 114, 128);
+    private static final Color COLOR_BORDER      = new Color(209, 213, 219);
+    private static final int   RADIUS            = 12;
+
     public ExpensesComputeApplication() {
-        super("Account Dashboard");
+        super("Expense Dashboard");
         compute = new ExpensesCompute();
 
-        // Modern look and feel
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            UIManager.setLookAndFeel(new FlatLightLaf());
+            UIManager.put("Component.focusWidth", 0);
+            UIManager.put("Button.arc", RADIUS);
+            UIManager.put("TextComponent.arc", RADIUS);
+            UIManager.put("ComboBox.arc", RADIUS);
+            UIManager.put("Component.arc", RADIUS);
+            UIManager.put("Panel.background", COLOR_BACKGROUND);
         } catch (Exception e) {
-            // Ignore and use default
+            e.printStackTrace();
         }
 
         setLayout(new BorderLayout(0, 0));
-        getContentPane().setBackground(Color.WHITE);
+        getContentPane().setBackground(COLOR_BACKGROUND);
 
-        // ===== TOP BAR =====
-        JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(new Color(25, 25, 25));
-        topBar.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        // TOP: tab bar
+        add(createTabBar(), BorderLayout.NORTH);
 
-        JLabel titleLabel = new JLabel("Account Dashboard");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(Color.WHITE);
-        topBar.add(titleLabel, BorderLayout.WEST);
-
-        // Month selector
-        JPanel monthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        monthPanel.setBackground(new Color(25, 25, 25));
-
-        JLabel monthLabel = new JLabel("Month:");
-        monthLabel.setForeground(Color.WHITE);
-        monthLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        monthPanel.add(monthLabel);
-
-        String[] months = {"January", "February", "March", "April", "May", "June",
-                          "July", "August", "September", "October", "November", "December"};
-        monthSelector = new JComboBox<>(months);
-        monthSelector.setSelectedIndex(selectedMonth - 1);
-        monthSelector.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        monthSelector.setBackground(Color.WHITE);
-        monthSelector.setPreferredSize(new Dimension(120, 30));
-        monthSelector.addActionListener(e -> updateSelectedMonth());
-        monthPanel.add(monthSelector);
-
-        topBar.add(monthPanel, BorderLayout.EAST);
-        add(topBar, BorderLayout.NORTH);
-
-        // ===== MAIN CONTENT =====
+        // CENTER: charts + right panel
         JPanel mainPanel = new JPanel(new BorderLayout(0, 0));
-        mainPanel.setBackground(Color.WHITE);
-
-        // ===== LEFT SIDEBAR =====
-        JPanel sidebar = new JPanel(new BorderLayout());
-        sidebar.setBackground(Color.WHITE);
-        sidebar.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        sidebar.setPreferredSize(new Dimension(280, 0));
-
-        // Current spending card
-        JPanel spendingCard = createSpendingCard();
-        sidebar.add(spendingCard, BorderLayout.NORTH);
-
-        // Input form
-        JPanel inputPanel = createInputPanel();
-        sidebar.add(inputPanel, BorderLayout.CENTER);
-
-        mainPanel.add(sidebar, BorderLayout.WEST);
-
-        // ===== RIGHT CONTENT =====
-        JPanel contentPanel = new JPanel(new BorderLayout(0, 0));
-        contentPanel.setBackground(Color.WHITE);
-
-        // Chart selector
-        JPanel chartSelectorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
-        chartSelectorPanel.setBackground(Color.WHITE);
-
-        JLabel chartLabel = new JLabel("Chart Type");
-        chartLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        chartLabel.setForeground(new Color(50, 50, 50));
-        chartSelectorPanel.add(chartLabel);
-
-        chartTypeBox = new JComboBox<>(new String[]{
-            "Monthly Breakdown",
-            "Yearly Overview",
-            "Monthly Pie",
-            "Month Comparison",
-            "Trend Analysis",
-            "Average Expenses"
-        });
-        chartTypeBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        chartTypeBox.setBackground(Color.WHITE);
-        chartTypeBox.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        chartTypeBox.setPreferredSize(new Dimension(200, 35));
-        chartTypeBox.addActionListener(e -> updateChart());
-        chartSelectorPanel.add(chartTypeBox);
-
-        contentPanel.add(chartSelectorPanel, BorderLayout.NORTH);
-
-        // Chart area
-        chartPanel = new JPanel(new BorderLayout());
-        chartPanel.setBackground(Color.WHITE);
-        chartPanel.setBorder(BorderFactory.createLineBorder(new Color(240, 240, 240), 1));
-        contentPanel.add(chartPanel, BorderLayout.CENTER);
-
-        mainPanel.add(contentPanel, BorderLayout.CENTER);
+        mainPanel.setBackground(COLOR_BACKGROUND);
+        mainPanel.add(createChartsContainer(), BorderLayout.CENTER);
+        mainPanel.add(createRightPanel(), BorderLayout.EAST);
         add(mainPanel, BorderLayout.CENTER);
 
-        setSize(1300, 750);
+        setSize(1350, 820);
+        setMinimumSize(new Dimension(1100, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
 
-        SwingUtilities.invokeLater(this::updateChart);
+        SwingUtilities.invokeLater(this::updateCharts);
     }
 
-    private JPanel createSpendingCard() {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(240, 240, 240), 1),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
+    // ─────────────────────────────────────────────
+    // TAB BAR  (Month | Year  +  month picker)
+    // ─────────────────────────────────────────────
+    private JPanel createTabBar() {
+        JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        bar.setBackground(COLOR_SURFACE);
+        bar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
+        bar.setPreferredSize(new Dimension(0, 50));
 
-        // Title
-        currentMonthNameLabel = new JLabel("Current Month");
-        currentMonthNameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        currentMonthNameLabel.setForeground(new Color(100, 100, 100));
-        card.add(currentMonthNameLabel, BorderLayout.NORTH);
+        tabButtonMonth = createTabButton("Month");
+        tabButtonYear  = createTabButton("Year");
+        setActiveTab(tabButtonMonth);
 
-        // Amount
+        bar.add(tabButtonMonth);
+        bar.add(tabButtonYear);
+        bar.add(Box.createHorizontalStrut(16));
+
+        JLabel ml = new JLabel("Month:");
+        ml.setForeground(COLOR_TEXT_SEC);
+        ml.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        bar.add(ml);
+
+        String[] months = {"January","February","March","April","May","June",
+                           "July","August","September","October","November","December"};
+        monthSelector = new JComboBox<>(months);
+        monthSelector.setSelectedIndex(selectedMonth - 1);
+        monthSelector.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        monthSelector.setPreferredSize(new Dimension(120, 28));
+        monthSelector.addActionListener(e -> {
+            selectedMonth = monthSelector.getSelectedIndex() + 1;
+            updateCharts();
+        });
+        bar.add(monthSelector);
+
+        // Year spinner
+        bar.add(Box.createHorizontalStrut(12));
+        JLabel yl = new JLabel("Year:");
+        yl.setForeground(COLOR_TEXT_SEC);
+        yl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        bar.add(yl);
+
+        SpinnerNumberModel yearModel = new SpinnerNumberModel(selectedYear, 2000, 2099, 1);
+        JSpinner yearSpinner = new JSpinner(yearModel);
+        yearSpinner.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        yearSpinner.setPreferredSize(new Dimension(75, 28));
+        yearSpinner.addChangeListener(e -> {
+            selectedYear = (int) yearSpinner.getValue();
+            updateCharts();
+        });
+        bar.add(yearSpinner);
+
+        return bar;
+    }
+
+    private JButton createTabButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(6, 18, 6, 18));
+        btn.setBackground(COLOR_SURFACE);
+        btn.setForeground(COLOR_TEXT_SEC);
+        btn.addActionListener(e -> {
+            setActiveTab(btn);
+            currentViewMode = text.equals("Month") ? 1 : 2;
+            updateCharts();
+        });
+        return btn;
+    }
+
+    private void setActiveTab(JButton active) {
+        for (JButton b : new JButton[]{tabButtonMonth, tabButtonYear}) {
+            if (b == null) continue;
+            b.setBackground(COLOR_SURFACE);
+            b.setForeground(COLOR_TEXT_SEC);
+        }
+        active.setBackground(COLOR_PRIMARY);
+        active.setForeground(Color.WHITE);
+    }
+
+    // ─────────────────────────────────────────────
+    // CHARTS CONTAINER  (left line + right pie)
+    // ─────────────────────────────────────────────
+    private JPanel createChartsContainer() {
+        JPanel container = new JPanel(new GridLayout(1, 2, 14, 0));
+        container.setBackground(COLOR_BACKGROUND);
+        container.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 8));
+
+        chartLeftPanel = createCard();
+        chartRightPanel = createCard();
+
+        container.add(chartLeftPanel);
+        container.add(chartRightPanel);
+        return container;
+    }
+
+    // ─────────────────────────────────────────────
+    // RIGHT PANEL  (stats + add expense)
+    // ─────────────────────────────────────────────
+    private JPanel createRightPanel() {
+        JPanel outer = new JPanel(new BorderLayout());
+        outer.setBackground(COLOR_BACKGROUND);
+        outer.setPreferredSize(new Dimension(290, 0));
+        outer.setBorder(BorderFactory.createEmptyBorder(16, 0, 16, 16));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
+        inner.setBackground(COLOR_BACKGROUND);
+
+        // ── Average Expenses card ──
+        inner.add(buildStatCard("Average Monthly Expenses",
+                                averageExpensesLabelRef(), COLOR_ACCENT));
+        inner.add(Box.createVerticalStrut(12));
+
+        // ── Current month spending card ──
+        inner.add(buildStatCard("Current Month Spending",
+                                currentMonthSpendingLabelRef(), COLOR_PRIMARY));
+        inner.add(Box.createVerticalStrut(12));
+
+        // ── Add Expense form card ──
+        inner.add(createAddExpenseCard());
+        inner.add(Box.createVerticalGlue());
+
+        JScrollPane sp = new JScrollPane(inner);
+        sp.setBorder(null);
+        sp.setBackground(COLOR_BACKGROUND);
+        sp.getViewport().setBackground(COLOR_BACKGROUND);
+        outer.add(sp, BorderLayout.CENTER);
+        return outer;
+    }
+
+    // Helpers to initialise labels before building cards
+    private JLabel averageExpensesLabelRef() {
+        averageExpensesLabel = new JLabel("RM 0.00");
+        averageExpensesLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        averageExpensesLabel.setForeground(COLOR_ACCENT);
+        return averageExpensesLabel;
+    }
+
+    private JLabel currentMonthSpendingLabelRef() {
         currentMonthSpendingLabel = new JLabel("RM 0.00");
-        currentMonthSpendingLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
-        currentMonthSpendingLabel.setForeground(new Color(25, 25, 25));
-        currentMonthSpendingLabel.setHorizontalAlignment(JLabel.CENTER);
-        card.add(currentMonthSpendingLabel, BorderLayout.CENTER);
+        currentMonthSpendingLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        currentMonthSpendingLabel.setForeground(COLOR_PRIMARY);
+        currentMonthNameLabel = new JLabel("–");
+        return currentMonthSpendingLabel;
+    }
 
+    private JPanel buildStatCard(String title, JLabel valueLabel, Color accentColor) {
+        JPanel card = createCard();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+
+        JLabel titleLbl = new JLabel(title);
+        titleLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        titleLbl.setForeground(COLOR_TEXT_SEC);
+        titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // coloured left accent stripe
+        JPanel stripe = new JPanel();
+        stripe.setBackground(accentColor);
+        stripe.setMaximumSize(new Dimension(3, 30));
+        stripe.setPreferredSize(new Dimension(3, 30));
+
+        JPanel row = new JPanel(new BorderLayout(8, 0));
+        row.setBackground(COLOR_CARD);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.add(stripe, BorderLayout.WEST);
+        row.add(valueLabel, BorderLayout.CENTER);
+
+        card.add(Box.createVerticalStrut(6));
+        card.add(wrapLeft(titleLbl));
+        card.add(Box.createVerticalStrut(6));
+        card.add(row);
+        card.add(Box.createVerticalStrut(6));
         return card;
     }
 
-    private JPanel createInputPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
+    private JPanel createAddExpenseCard() {
+        JPanel card = createCard();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
 
-        // Category
-        JPanel categoryPanel = new JPanel(new BorderLayout());
-        categoryPanel.setBackground(Color.WHITE);
-        categoryPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+        JLabel title = new JLabel("Add Expense");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        title.setForeground(COLOR_TEXT);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(title);
+        card.add(Box.createVerticalStrut(14));
 
+        // Category label + combo
+        card.add(fieldLabel("Category"));
+        card.add(Box.createVerticalStrut(4));
         categoryBox = new JComboBox<>(new String[]{
-            "Food & Beverages",
-            "Entertainment",
-            "Leisure & Sports",
-            "Services",
-            "Shopping",
-            "Telecom",
-            "Utilities"
+            "Food & Beverages", "Entertainment", "Leisure & Sports",
+            "Services", "Shopping", "Telecom", "Utilities"
         });
         categoryBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        categoryBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
-        categoryPanel.add(categoryBox, BorderLayout.CENTER);
-        panel.add(categoryPanel);
+        categoryBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        categoryBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(categoryBox);
+        card.add(Box.createVerticalStrut(10));
 
-        // Amount
-        JPanel amountPanel = new JPanel(new BorderLayout());
-        amountPanel.setBackground(Color.WHITE);
-        amountPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-
+        // Amount label + field
+        card.add(fieldLabel("Amount (RM)"));
+        card.add(Box.createVerticalStrut(4));
         amountField = new JTextField();
         amountField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        amountField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        amountField.setAlignmentX(Component.LEFT_ALIGNMENT);
         amountField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-            BorderFactory.createEmptyBorder(8, 12, 8, 12)
+            new RoundedBorder(COLOR_BORDER, RADIUS),
+            BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
-        amountField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
-        amountPanel.add(amountField, BorderLayout.CENTER);
-        panel.add(amountPanel);
+        card.add(amountField);
+        card.add(Box.createVerticalStrut(14));
 
         // Add button
         addButton = new JButton("Add Expense");
         addButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        addButton.setBackground(new Color(25, 25, 25));
-        addButton.setForeground(Color.BLACK);
-        addButton.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
-        addButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        addButton.setBackground(COLOR_PRIMARY);
+        addButton.setForeground(Color.WHITE);
         addButton.setFocusPainted(false);
-        addButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        addButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        addButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        addButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         addButton.addActionListener(this::handleAddExpense);
-        panel.add(addButton);
+        card.add(addButton);
 
-        return panel;
+        return card;
     }
 
-    private void updateSelectedMonth() {
-        selectedMonth = monthSelector.getSelectedIndex() + 1;
-        updateChart();
+    // ─────────────────────────────────────────────
+    // UPDATE CHARTS
+    // ─────────────────────────────────────────────
+    private void updateCharts() {
+        chartLeftPanel.removeAll();
+        chartRightPanel.removeAll();
+
+        try {
+            double monthlyTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
+            double avgMonthly   = compute.getAverageMonthlyExpenses(selectedYear);
+
+            currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
+            averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
+            if (currentMonthNameLabel != null) {
+                currentMonthNameLabel.setText(monthSelector.getItemAt(selectedMonth - 1) + " " + selectedYear);
+            }
+
+            JPanel leftChart, rightChart;
+
+            if (currentViewMode == 1) { // Month view
+                Map<Integer, Double> trendData   = compute.getMonthlyTotals(selectedYear);
+                Map<String, Double>  monthlyData = compute.getTotalsByCategory(selectedYear, selectedMonth);
+
+                leftChart  = new ChartFrame(applyLightTheme(
+                    ChartLine.createMonthlyTrendChart(trendData, selectedYear)));
+                rightChart = new ChartFrame(applyLightTheme(
+                    ChartPie.createMonthlyPieChart(monthlyData, selectedYear, selectedMonth)));
+
+            } else { // Year view
+                Map<String, Double> yearlyData = compute.getTotalsByCategory(selectedYear, null);
+
+                leftChart  = new ChartFrame(applyLightTheme(
+                    ChartBar.createCategoryBarChart(yearlyData, "Yearly Overview", "Category", "Amount (RM)")));
+                rightChart = new ChartFrame(applyLightTheme(
+                    ChartPie.createYearlyPieChart(yearlyData, selectedYear)));
+            }
+
+            chartLeftPanel.add(leftChart, BorderLayout.CENTER);
+            chartRightPanel.add(rightChart, BorderLayout.CENTER);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showChartError("Database connection required. Please ensure accountdb.sql is running.");
+        }
+
+        chartLeftPanel.revalidate();
+        chartLeftPanel.repaint();
+        chartRightPanel.revalidate();
+        chartRightPanel.repaint();
     }
 
+    private JFreeChart applyLightTheme(JFreeChart chart) {
+        chart.setBackgroundPaint(COLOR_CARD);
+        chart.getPlot().setBackgroundPaint(COLOR_CARD);
+        if (chart.getTitle() != null)
+            chart.getTitle().setPaint(COLOR_TEXT);
+        return chart;
+    }
+
+    private void showChartError(String msg) {
+        JPanel err = new JPanel(new BorderLayout());
+        err.setBackground(COLOR_CARD);
+        JLabel lbl = new JLabel("<html><center>" + msg + "</center></html>");
+        lbl.setForeground(COLOR_TEXT_SEC);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lbl.setHorizontalAlignment(JLabel.CENTER);
+        err.add(lbl, BorderLayout.CENTER);
+        chartLeftPanel.add(err, BorderLayout.CENTER);
+        chartLeftPanel.revalidate();
+        chartLeftPanel.repaint();
+    }
+
+    // ─────────────────────────────────────────────
+    // ADD EXPENSE HANDLER
+    // ─────────────────────────────────────────────
     private void handleAddExpense(ActionEvent e) {
         try {
             String category = (String) categoryBox.getSelectedItem();
-            double amount = Double.parseDouble(amountField.getText());
+            String amountText = amountField.getText().trim();
 
+            if (amountText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter an amount.",
+                    "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            double amount = Double.parseDouble(amountText);
             compute.addExpense(selectedYear, selectedMonth, category, amount);
             amountField.setText("");
-            updateChart();
-
+            updateCharts();
             JOptionPane.showMessageDialog(this, "Expense added successfully!",
                 "Success", JOptionPane.INFORMATION_MESSAGE);
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid amount.",
+            JOptionPane.showMessageDialog(this, "Please enter a valid number.",
                 "Invalid Input", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void updateChart() {
-        chartPanel.removeAll();
-        String selected = (String) chartTypeBox.getSelectedItem();
+    // ─────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────
+    /** White rounded card panel */
+    private JPanel createCard() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(COLOR_CARD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            new RoundedBorder(COLOR_BORDER, RADIUS),
+            BorderFactory.createEmptyBorder(14, 14, 14, 14)
+        ));
+        return card;
+    }
 
-        try {
-            // Update current month spending
-            double monthlyTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
-            System.out.println("[DEBUG] Monthly Total for " + selectedYear + "-" + selectedMonth + ": " + monthlyTotal);
-            currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
-            currentMonthNameLabel.setText(monthSelector.getItemAt(selectedMonth - 1));
+    private JLabel fieldLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lbl.setForeground(COLOR_TEXT_SEC);
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return lbl;
+    }
 
-            JPanel chartDisplay = null;
+    private JPanel wrapLeft(JComponent comp) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        p.setBackground(COLOR_CARD);
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+        p.add(comp);
+        return p;
+    }
 
-            switch (selected) {
-                case "Monthly Breakdown":
-                    Map<String, Double> categoryData = compute.getTotalsByCategory(selectedYear, selectedMonth);
-                    System.out.println("[DEBUG] Category Data: " + categoryData);
-                    JFreeChart barChart = ChartBar.createCategoryBarChart(
-                        categoryData,
-                        "Monthly Breakdown",
-                        "Category", "Amount"
-                    );
-                    System.out.println("[DEBUG] Bar Chart created, adding to display...");
-                    chartDisplay = new ChartFrame(barChart);
-                    break;
+    // ─────────────────────────────────────────────
+    // ROUNDED BORDER  (helper inner class)
+    // ─────────────────────────────────────────────
+    static class RoundedBorder extends AbstractBorder {
+        private final Color color;
+        private final int radius;
 
-                case "Yearly Overview":
-                    Map<String, Double> yearlyData = compute.getTotalsByCategory(selectedYear, null);
-                    System.out.println("[DEBUG] Yearly Data: " + yearlyData);
-                    JFreeChart yearlyPie = ChartPie.createYearlyPieChart(
-                        yearlyData,
-                        selectedYear
-                    );
-                    System.out.println("[DEBUG] Yearly Pie Chart created, adding to display...");
-                    chartDisplay = new ChartFrame(yearlyPie);
-                    break;
-
-                case "Monthly Pie":
-                    Map<String, Double> monthlyData = compute.getTotalsByCategory(selectedYear, selectedMonth);
-                    System.out.println("[DEBUG] Monthly Pie Data: " + monthlyData);
-                    JFreeChart monthlyPie = ChartPie.createMonthlyPieChart(
-                        monthlyData,
-                        selectedYear, selectedMonth
-                    );
-                    System.out.println("[DEBUG] Monthly Pie Chart created, adding to display...");
-                    chartDisplay = new ChartFrame(monthlyPie);
-                    break;
-
-                case "Month Comparison":
-                    int prevMonth = (selectedMonth == 1) ? 12 : selectedMonth - 1;
-                    int comparisonYear = (selectedMonth == 1) ? selectedYear - 1 : selectedYear;
-                    double prevMonthTotal = compute.getMonthlyTotal(comparisonYear, prevMonth);
-                    double currMonthTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
-                    System.out.println("[DEBUG] Month Comparison - Previous: " + prevMonthTotal + ", Current: " + currMonthTotal);
-                    JFreeChart comparisonChart = ChartBar.createMonthComparisonChart(
-                        prevMonthTotal,
-                        currMonthTotal,
-                        prevMonth, selectedMonth, selectedYear
-                    );
-                    System.out.println("[DEBUG] Month Comparison Chart created, adding to display...");
-                    chartDisplay = new ChartFrame(comparisonChart);
-                    break;
-
-                case "Trend Analysis":
-                    Map<Integer, Double> trendData = compute.getMonthlyTotals(selectedYear);
-                    System.out.println("[DEBUG] Trend Data: " + trendData);
-                    JFreeChart trendChart = ChartLine.createMonthlyTrendChart(
-                        trendData,
-                        selectedYear
-                    );
-                    System.out.println("[DEBUG] Trend Chart created, adding to display...");
-                    chartDisplay = new ChartFrame(trendChart);
-                    break;
-
-                case "Average Expenses":
-                    JPanel avgPanel = new JPanel(new BorderLayout());
-                    avgPanel.setBackground(Color.WHITE);
-                    double avg = compute.getAverageMonthlyExpenses(selectedYear);
-                    System.out.println("[DEBUG] Average Monthly Expenses: " + avg);
-                    JLabel avgLabel = new JLabel(String.format("RM %.2f", avg));
-                    avgLabel.setFont(new Font("Segoe UI", Font.BOLD, 48));
-                    avgLabel.setHorizontalAlignment(JLabel.CENTER);
-                    avgLabel.setForeground(new Color(25, 25, 25));
-                    avgPanel.add(avgLabel, BorderLayout.CENTER);
-
-                    JLabel avgTitle = new JLabel("Average Monthly Expenses");
-                    avgTitle.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-                    avgTitle.setHorizontalAlignment(JLabel.CENTER);
-                    avgTitle.setForeground(new Color(100, 100, 100));
-                    avgPanel.add(avgTitle, BorderLayout.NORTH);
-
-                    chartDisplay = avgPanel;
-                    break;
-            }
-
-            if (chartDisplay != null) {
-                System.out.println("[DEBUG] Chart display is not null, adding to panel...");
-                chartPanel.add(chartDisplay, BorderLayout.CENTER);
-                chartPanel.revalidate();
-                chartPanel.repaint();
-                System.out.println("[DEBUG] Chart panel revalidated and repainted");
-            } else {
-                System.out.println("[DEBUG] ERROR: Chart display is null!");
-                JLabel noChartLabel = new JLabel("No chart available");
-                chartPanel.add(noChartLabel, BorderLayout.CENTER);
-            }
-        } catch (Exception ex) {
-            System.out.println("[DEBUG] Exception caught in updateChart: " + ex.getMessage());
-            ex.printStackTrace();
-            JPanel errorPanel = new JPanel(new BorderLayout());
-            errorPanel.setBackground(Color.WHITE);
-            JLabel errorLabel = new JLabel("Database connection required. Please run accountdb.sql first.");
-            errorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            errorLabel.setHorizontalAlignment(JLabel.CENTER);
-            errorLabel.setForeground(new Color(150, 150, 150));
-            errorPanel.add(errorLabel, BorderLayout.CENTER);
-            chartPanel.add(errorPanel, BorderLayout.CENTER);
+        RoundedBorder(Color color, int radius) {
+            this.color  = color;
+            this.radius = radius;
         }
 
-        chartPanel.revalidate();
-        chartPanel.repaint();
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.draw(new RoundRectangle2D.Double(x, y, w - 1, h - 1, radius, radius));
+            g2.dispose();
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) { return new Insets(radius / 2, radius / 2, radius / 2, radius / 2); }
+
+        @Override
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.set(radius / 2, radius / 2, radius / 2, radius / 2);
+            return insets;
+        }
     }
 
     public static void main(String[] args) {
