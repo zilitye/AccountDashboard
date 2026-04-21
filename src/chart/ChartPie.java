@@ -109,6 +109,7 @@ public class ChartPie {
         plot.setLabelBackgroundPaint(null);
         plot.setLabelShadowPaint(null);
         plot.setLabelOutlinePaint(null);
+        plot.setLabelOutlineStroke(null);
         
         // Legend properties
         chart.getLegend().setItemFont(new Font("Segoe UI", Font.PLAIN, 11));

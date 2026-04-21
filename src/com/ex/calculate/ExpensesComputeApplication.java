@@ -314,6 +314,7 @@ private JPanel createChartsContainer() {
         card.add(categoryBox);
         card.add(Box.createVerticalStrut(10));
 
+
         // Amount label + field
         card.add(fieldLabel("Amount (RM)"));
         card.add(Box.createVerticalStrut(4));
