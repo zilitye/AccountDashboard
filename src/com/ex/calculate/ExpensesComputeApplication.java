@@ -70,14 +70,23 @@ public class ExpensesComputeApplication extends JFrame {
         // CENTER: charts + right panel
         JPanel mainPanel = new JPanel(new BorderLayout(0, 0));
         mainPanel.setBackground(COLOR_BACKGROUND);
-        mainPanel.add(createChartsContainer(), BorderLayout.CENTER);
+        
+        // Wrap charts container to prevent expansion
+        JPanel chartsWrapper = new JPanel();
+        chartsWrapper.setLayout(new BoxLayout(chartsWrapper, BoxLayout.X_AXIS));
+        chartsWrapper.setBackground(COLOR_BACKGROUND);
+        chartsWrapper.add(createChartsContainer());
+        chartsWrapper.add(Box.createHorizontalGlue());
+        
+        mainPanel.add(chartsWrapper, BorderLayout.CENTER);
         mainPanel.add(createRightPanel(), BorderLayout.EAST);
         add(mainPanel, BorderLayout.CENTER);
 
-        setSize(1350, 820);
-        setMinimumSize(new Dimension(1100, 650));
+        setSize(950, 820);
+        setMinimumSize(new Dimension(950, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        //setResizable(false);
         setVisible(true);
 
         SwingUtilities.invokeLater(this::updateCharts);
@@ -163,21 +172,41 @@ public class ExpensesComputeApplication extends JFrame {
         active.setForeground(Color.WHITE);
     }
 
-    // ─────────────────────────────────────────────
-    // CHARTS CONTAINER  (left line + right pie)
-    // ─────────────────────────────────────────────
-    private JPanel createChartsContainer() {
-        JPanel container = new JPanel(new GridLayout(1, 2, 14, 0));
-        container.setBackground(COLOR_BACKGROUND);
-        container.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 8));
+ // ─────────────────────────────────────────────
+// CHARTS CONTAINER  (responsive: vertical <-> horizontal)
+// ─────────────────────────────────────────────
+private JPanel createChartsContainer() {
+    JPanel container = new JPanel();
+    container.setBackground(COLOR_BACKGROUND);
+    container.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 8));
 
-        chartLeftPanel = createCard();
-        chartRightPanel = createCard();
+    chartLeftPanel = createCard();
+    chartRightPanel = createCard();
 
-        container.add(chartLeftPanel);
-        container.add(chartRightPanel);
-        return container;
-    }
+    // Default layout: vertical (stacked)
+    container.setLayout(new GridLayout(2, 1, 0, 14));
+    container.add(chartLeftPanel);
+    container.add(chartRightPanel);
+
+    // Add resize listener to parent frame
+    this.addComponentListener(new java.awt.event.ComponentAdapter() {
+        @Override
+        public void componentResized(java.awt.event.ComponentEvent e) {
+            int width = getWidth();
+            if (width > 1200) { 
+                // Switch to horizontal layout when expanded
+                container.setLayout(new GridLayout(1, 2, 14, 0));
+            } else {
+                // Default stacked layout
+                container.setLayout(new GridLayout(2, 1, 0, 14));
+            }
+            container.revalidate();
+        }
+    });
+
+    return container;
+}
+
 
     // ─────────────────────────────────────────────
     // RIGHT PANEL  (stats + add expense)
@@ -473,6 +502,7 @@ public class ExpensesComputeApplication extends JFrame {
         }
     }
 
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(ExpensesComputeApplication::new);
     }
