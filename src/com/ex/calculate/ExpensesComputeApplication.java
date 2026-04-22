@@ -162,15 +162,47 @@ public class ExpensesComputeApplication extends JFrame {
         return btn;
     }
 
-    private void setActiveTab(JButton active) {
-        for (JButton b : new JButton[]{tabButtonMonth, tabButtonYear}) {
-            if (b == null) continue;
-            b.setBackground(COLOR_SURFACE);
-            b.setForeground(COLOR_TEXT_SEC);
+    // Utility method to style buttons with pill shape
+private void styleRoundedButton(JButton button, Color bg, Color fg) {
+    button.setContentAreaFilled(false);
+    button.setFocusPainted(false);
+    button.setBorderPainted(false);
+    button.setOpaque(false);
+
+    button.setBackground(bg);
+    button.setForeground(fg);
+
+    button.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
+        @Override
+        public void paint(Graphics g, JComponent c) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            JButton b = (JButton) c;
+            int arc = 10; // adjust for roundness
+            g2.setColor(b.getBackground());
+            g2.fillRoundRect(0, 0, b.getWidth(), b.getHeight(), arc, arc);
+
+            g2.setColor(b.getForeground());
+            FontMetrics fm = g2.getFontMetrics();
+            int x = (b.getWidth() - fm.stringWidth(b.getText())) / 2;
+            int y = (b.getHeight() + fm.getAscent()) / 2 - 2;
+            g2.drawString(b.getText(), x, y);
+
+            g2.dispose();
         }
-        active.setBackground(COLOR_PRIMARY);
-        active.setForeground(Color.WHITE);
+    });
+}
+
+
+private void setActiveTab(JButton active) {
+    for (JButton b : new JButton[]{tabButtonMonth, tabButtonYear}) {
+        if (b == null) continue;
+        styleRoundedButton(b, COLOR_SURFACE, COLOR_TEXT_SEC);
     }
+    styleRoundedButton(active, COLOR_PRIMARY, Color.WHITE);
+}
+
 
  // ─────────────────────────────────────────────
 // CHARTS CONTAINER  (responsive: vertical <-> horizontal)
@@ -324,7 +356,7 @@ private JPanel createChartsContainer() {
         amountField.setAlignmentX(Component.LEFT_ALIGNMENT);
         amountField.setBorder(BorderFactory.createCompoundBorder(
             new RoundedBorder(COLOR_BORDER, RADIUS),
-            BorderFactory.createEmptyBorder(4, 8, 4, 8)
+            BorderFactory.createEmptyBorder(35, 8, 4, 8)
         ));
         card.add(amountField);
         card.add(Box.createVerticalStrut(14));
