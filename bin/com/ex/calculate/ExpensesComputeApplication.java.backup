@@ -1,0 +1,354 @@
+package com.ex.calculate;
+
+import chart.ChartFrame;
+import chart.ChartPie;
+import chart.ChartBar;
+import chart.ChartLine;
+
+import org.jfree.chart.JFreeChart;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.time.LocalDate;
+import java.time.YearMonth;
+
+public class ExpensesComputeApplication extends JFrame {
+    private JComboBox<String> categoryBox;
+    private JTextField amountField;
+    private JButton addButton;
+    private JComboBox<String> chartTypeBox;
+    private JPanel chartPanel;
+    private JComboBox<String> monthSelector;
+    private JLabel currentMonthSpendingLabel;
+    private JLabel currentMonthNameLabel;
+
+    private ExpensesCompute compute;
+    private int selectedYear = LocalDate.now().getYear();
+    private int selectedMonth = LocalDate.now().getMonthValue();
+
+    public ExpensesComputeApplication() {
+        super("Account Dashboard");
+        compute = new ExpensesCompute();
+
+        setLayout(new BorderLayout(10, 10));
+        setBackground(new Color(245, 245, 250));
+        ((JPanel) getContentPane()).setBackground(new Color(245, 245, 250));
+
+        // ===== HEADER PANEL =====
+        JPanel headerPanel = new JPanel(new BorderLayout(10, 10));
+        headerPanel.setBackground(new Color(41, 128, 185));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel titleLabel = new JLabel("💰 Account Dashboard");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+
+        // Month selector in header
+        JPanel monthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        monthPanel.setBackground(new Color(41, 128, 185));
+        
+        JLabel monthLabel = new JLabel("Select Month:");
+        monthLabel.setForeground(Color.WHITE);
+        monthLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        monthPanel.add(monthLabel);
+        
+        String[] months = {"January", "February", "March", "April", "May", "June", 
+                          "July", "August", "September", "October", "November", "December"};
+        monthSelector = new JComboBox<>(months);
+        monthSelector.setSelectedIndex(selectedMonth - 1);
+        monthSelector.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        monthSelector.setPreferredSize(new Dimension(120, 30));
+        monthSelector.addActionListener(e -> updateSelectedMonth());
+        monthPanel.add(monthSelector);
+        
+        headerPanel.add(monthPanel, BorderLayout.EAST);
+        add(headerPanel, BorderLayout.NORTH);
+
+        // ===== CONTENT PANEL =====
+        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
+        contentPanel.setBackground(new Color(245, 245, 250));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        // ===== LEFT PANEL: INPUT & SPENDING INFO =====
+        JPanel leftPanel = new JPanel(new BorderLayout(10, 10));
+        leftPanel.setBackground(new Color(245, 245, 250));
+
+        // Current Month Spending Card
+        JPanel spendingCard = createSpendingCard();
+        leftPanel.add(spendingCard, BorderLayout.NORTH);
+
+        // Input Panel
+        JPanel inputPanel = createInputPanel();
+        leftPanel.add(inputPanel, BorderLayout.CENTER);
+
+        contentPanel.add(leftPanel, BorderLayout.WEST);
+
+        // ===== CENTER PANEL: CHART =====
+        JPanel chartContainer = new JPanel(new BorderLayout(10, 10));
+        chartContainer.setBackground(new Color(245, 245, 250));
+
+        // Chart Type Selector
+        JPanel chartSelectorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        chartSelectorPanel.setBackground(new Color(245, 245, 250));
+        JLabel chartLabel = new JLabel("Chart Type:");
+        chartLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        chartSelectorPanel.add(chartLabel);
+
+        chartTypeBox = new JComboBox<>(new String[]{
+            "Monthly Category Breakdown",
+            "Yearly Pie Chart",
+            "Monthly Pie Chart",
+            "Month-to-Month Comparison",
+            "Monthly Trend Line",
+            "Average Monthly Expenses"
+        });
+        chartTypeBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        chartTypeBox.setPreferredSize(new Dimension(250, 32));
+        chartTypeBox.addActionListener(e -> updateChart());
+        chartSelectorPanel.add(chartTypeBox);
+
+        chartContainer.add(chartSelectorPanel, BorderLayout.NORTH);
+
+        // Chart Display Area
+        chartPanel = new JPanel(new BorderLayout());
+        chartPanel.setBackground(Color.WHITE);
+        chartPanel.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 225), 1, true));
+        chartContainer.add(chartPanel, BorderLayout.CENTER);
+
+        contentPanel.add(chartContainer, BorderLayout.CENTER);
+
+        add(contentPanel, BorderLayout.CENTER);
+
+        setSize(1200, 700);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setVisible(true);
+        
+        SwingUtilities.invokeLater(this::updateChart);
+    }
+
+    private JPanel createSpendingCard() {
+        JPanel card = new JPanel(new BorderLayout(10, 10));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 225), 1, true));
+        card.setPreferredSize(new Dimension(300, 120));
+
+        // Icon + Title
+        JLabel iconLabel = new JLabel("📊");
+        iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 32));
+        card.add(iconLabel, BorderLayout.WEST);
+
+        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 5));
+        textPanel.setBackground(Color.WHITE);
+        textPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        currentMonthNameLabel = new JLabel("This Month's Spending");
+        currentMonthNameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        currentMonthNameLabel.setForeground(new Color(100, 100, 100));
+        textPanel.add(currentMonthNameLabel);
+
+        currentMonthSpendingLabel = new JLabel("₹ 0.00");
+        currentMonthSpendingLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        currentMonthSpendingLabel.setForeground(new Color(41, 128, 185));
+        textPanel.add(currentMonthSpendingLabel);
+
+        card.add(textPanel, BorderLayout.CENTER);
+        card.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 5, new Color(41, 128, 185)));
+
+        return card;
+    }
+
+    private JPanel createInputPanel() {
+        JPanel panel = new JPanel(new GridLayout(4, 1, 0, 10));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 225), 1, true));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        // Category Selection
+        JPanel categoryPanel = new JPanel(new BorderLayout(10, 0));
+        categoryPanel.setBackground(Color.WHITE);
+        JLabel categoryLabel = new JLabel("Category:");
+        categoryLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        categoryLabel.setForeground(new Color(50, 50, 50));
+        categoryPanel.add(categoryLabel, BorderLayout.WEST);
+
+        categoryBox = new JComboBox<>(new String[]{
+            "Food & Beverages",
+            "Entertainment",
+            "Leisure & Sports",
+            "Services",
+            "Shopping",
+            "Telecom",
+            "Utilities"
+        });
+        categoryBox.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        categoryPanel.add(categoryBox, BorderLayout.CENTER);
+        panel.add(categoryPanel);
+
+        // Amount Input
+        JPanel amountPanel = new JPanel(new BorderLayout(10, 0));
+        amountPanel.setBackground(Color.WHITE);
+        JLabel amountLabel = new JLabel("Amount (₹):");
+        amountLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        amountLabel.setForeground(new Color(50, 50, 50));
+        amountPanel.add(amountLabel, BorderLayout.WEST);
+
+        amountField = new JTextField();
+        amountField.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        amountField.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 205)));
+        amountPanel.add(amountField, BorderLayout.CENTER);
+        panel.add(amountPanel);
+
+        // Add Button
+        addButton = new JButton("+ Add Expense");
+        addButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        addButton.setBackground(new Color(46, 204, 113));
+        addButton.setForeground(Color.WHITE);
+        addButton.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        addButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        addButton.addActionListener(this::handleAddExpense);
+        addButton.setFocusPainted(false);
+        panel.add(addButton);
+
+        // Spacer
+        panel.add(new JPanel());
+
+        return panel;
+    }
+
+    private void updateSelectedMonth() {
+        selectedMonth = monthSelector.getSelectedIndex() + 1;
+        updateChart();
+    }
+
+    private void handleAddExpense(ActionEvent e) {
+        try {
+            String category = (String) categoryBox.getSelectedItem();
+            double amount = Double.parseDouble(amountField.getText());
+
+            compute.addExpense(selectedYear, selectedMonth, category, amount);
+            amountField.setText("");
+            updateChart();
+            
+            JOptionPane.showMessageDialog(this, "Expense added successfully!", 
+                "Success", JOptionPane.INFORMATION_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid amount.", 
+                "Invalid Input", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void updateChart() {
+        chartPanel.removeAll();
+        String selected = (String) chartTypeBox.getSelectedItem();
+
+        try {
+            // Update current month spending
+            double monthlyTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
+            currentMonthSpendingLabel.setText(String.format("₹ %.2f", monthlyTotal));
+            currentMonthNameLabel.setText(monthSelector.getItemAt(selectedMonth - 1) + "'s Spending");
+
+            JPanel chartDisplay = null;
+
+            switch (selected) {
+                case "Monthly Category Breakdown":
+                    JFreeChart barChart = ChartBar.createCategoryBarChart(
+                        compute.getTotalsByCategory(selectedYear, selectedMonth),
+                        "Category Breakdown - " + monthSelector.getItemAt(selectedMonth - 1),
+                        "Category", "Amount"
+                    );
+                    chartDisplay = new ChartFrame(barChart);
+                    break;
+
+                case "Yearly Pie Chart":
+                    JFreeChart yearlyPie = ChartPie.createYearlyPieChart(
+                        compute.getTotalsByCategory(selectedYear, null), 
+                        selectedYear
+                    );
+                    chartDisplay = new ChartFrame(yearlyPie);
+                    break;
+
+                case "Monthly Pie Chart":
+                    JFreeChart monthlyPie = ChartPie.createMonthlyPieChart(
+                        compute.getTotalsByCategory(selectedYear, selectedMonth), 
+                        selectedYear, 
+                        selectedMonth
+                    );
+                    chartDisplay = new ChartFrame(monthlyPie);
+                    break;
+
+                case "Month-to-Month Comparison":
+                    int prevMonth = (selectedMonth == 1) ? 12 : selectedMonth - 1;
+                    int comparisonYear = (selectedMonth == 1) ? selectedYear - 1 : selectedYear;
+                    JFreeChart comparisonChart = ChartBar.createMonthComparisonChart(
+                        compute.getMonthlyTotal(comparisonYear, prevMonth),
+                        compute.getMonthlyTotal(selectedYear, selectedMonth),
+                        prevMonth, selectedMonth, selectedYear
+                    );
+                    chartDisplay = new ChartFrame(comparisonChart);
+                    break;
+
+                case "Monthly Trend Line":
+                    JFreeChart trendChart = ChartLine.createMonthlyTrendChart(
+                        compute.getMonthlyTotals(selectedYear), 
+                        selectedYear
+                    );
+                    chartDisplay = new ChartFrame(trendChart);
+                    break;
+
+                case "Average Monthly Expenses":
+                    JPanel avgPanel = new JPanel(new BorderLayout());
+                    avgPanel.setBackground(Color.WHITE);
+                    double avg = compute.getAverageMonthlyExpenses(selectedYear);
+                    JLabel avgLabel = new JLabel("<html><div style='text-align: center;'>"
+                        + "<h2 style='color: #2980b9;'>Average Monthly Expenses</h2>"
+                        + "<h1 style='color: #27ae60; font-size: 48px;'>₹ " 
+                        + String.format("%.2f", avg) + "</h1>"
+                        + "</div></html>");
+                    avgLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
+                    avgLabel.setHorizontalAlignment(JLabel.CENTER);
+                    avgPanel.add(avgLabel, BorderLayout.CENTER);
+                    chartDisplay = avgPanel;
+                    break;
+            }
+
+            if (chartDisplay != null) {
+                chartPanel.add(chartDisplay, BorderLayout.CENTER);
+            }
+        } catch (Exception ex) {
+            JPanel errorPanel = new JPanel(new BorderLayout());
+            errorPanel.setBackground(Color.WHITE);
+            
+            JPanel messagePanel = new JPanel(new GridLayout(3, 1, 0, 20));
+            messagePanel.setBackground(Color.WHITE);
+            messagePanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
+            
+            JLabel titleLabel = new JLabel("⚠️ Database Connection Issue");
+            titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            titleLabel.setForeground(new Color(192, 57, 43));
+            messagePanel.add(titleLabel);
+            
+            JLabel messageLabel = new JLabel("Please run the database script (accountdb.sql) and ensure the expenses table is created properly.");
+            messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            messageLabel.setForeground(new Color(100, 100, 100));
+            messagePanel.add(messageLabel);
+            
+            JLabel detailLabel = new JLabel("Error: " + ex.getMessage());
+            detailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            detailLabel.setForeground(new Color(155, 89, 182));
+            messagePanel.add(detailLabel);
+            
+            errorPanel.add(messagePanel, BorderLayout.CENTER);
+            chartPanel.add(errorPanel, BorderLayout.CENTER);
+        }
+
+        chartPanel.revalidate();
+        chartPanel.repaint();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(ExpensesComputeApplication::new);
+    }
+}
