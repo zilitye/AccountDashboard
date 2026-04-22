@@ -39,7 +39,7 @@ public class ExpensesComputeApplication extends JFrame {
     private static final Color COLOR_CARD        = new Color(255, 255, 255);
     private static final Color COLOR_PRIMARY     = new Color(59, 130, 246);   // blue
     private static final Color COLOR_ACCENT      = new Color(16, 185, 129);   // green
-    private static final Color COLOR_DANGER      = new Color(239, 68, 68);    // red
+    //private static final Color COLOR_DANGER      = new Color(239, 68, 68);    // red
     private static final Color COLOR_TEXT        = new Color(17, 24, 39);
     private static final Color COLOR_TEXT_SEC    = new Color(107, 114, 128);
     private static final Color COLOR_BORDER      = new Color(209, 213, 219);

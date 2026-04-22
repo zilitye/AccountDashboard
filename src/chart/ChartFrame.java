@@ -20,7 +20,7 @@ public class ChartFrame extends JPanel {
     private static final Color COLOR_TEXT_PRIMARY = new Color(17, 24, 39);        // Dark charcoal
     private static final Color COLOR_TEXT_SECONDARY = new Color(75, 85, 99);      // Medium gray
     private static final Color COLOR_BORDER = new Color(229, 231, 235);           // Light border
-    private static final Color COLOR_ACCENT = new Color(59, 130, 246);            // Modern blue
+    //private static final Color COLOR_ACCENT = new Color(59, 130, 246);            // Modern blue
 
     // Fonts
     private static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 16);

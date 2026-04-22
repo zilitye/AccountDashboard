@@ -8,7 +8,7 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.ui.RectangleEdge;
 
 import java.awt.*;
-import java.text.DecimalFormat;
+//import java.text.DecimalFormat;
 import java.util.Map;
 
 /**
