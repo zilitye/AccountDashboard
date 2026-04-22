@@ -19,16 +19,16 @@ public class ChartPie {
     
 // Modern Color Palette for pie slices
     private static final Color[] MODERN_COLORS = {
-        new Color(255, 99, 132),    // Blue
-        new Color(54, 162, 235),    // Green
-        new Color(255, 206, 86),    // Amber
-        new Color(75, 192, 192),     // Red
-        new Color(153, 102, 255),    // Purple
-        new Color(255, 159, 64),    // Sky Blue
-        new Color(255, 87, 51),    // Pink
-        new Color(199, 0, 57),      // Emerald
-        new Color(144, 12, 63),      // Emerald
-        new Color(88, 24, 69)      // Emerald
+        new Color(255, 99, 132),
+        new Color(54, 162, 235),
+        new Color(255, 206, 86),
+        new Color(75, 192, 192),
+        new Color(153, 102, 255),
+        new Color(255, 159, 64),
+        new Color(255, 87, 51),
+        new Color(199, 0, 57),
+        new Color(144, 12, 63),
+        new Color(88, 24, 69)
     };
 
 
