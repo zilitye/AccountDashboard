@@ -2,6 +2,7 @@ package chart;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
@@ -70,7 +71,7 @@ public class ChartBar {
         JFreeChart chart = ChartFactory.createBarChart(
                 "Month-to-Month Comparison - " + year,
                 "Month",
-                "Amount ($)",
+                "Amount (RM)",
                 dataset
         );
 
@@ -93,7 +94,7 @@ public class ChartBar {
         JFreeChart chart = ChartFactory.createBarChart(
                 "Yearly Expenses Comparison",
                 "Year",
-                "Amount ($)",
+                "Amount (RM)",
                 dataset
         );
 
@@ -106,7 +107,8 @@ public class ChartBar {
      */
     private static void styleBarChart(JFreeChart chart, boolean isComparison) {
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        
+        chart.getLegend().setFrame(BlockBorder.NONE);
+
         // Background
         plot.setBackgroundPaint(null);
         plot.setOutlineVisible(false);

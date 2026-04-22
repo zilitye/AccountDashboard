@@ -2,6 +2,7 @@ package chart;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.ui.RectangleEdge;
@@ -93,7 +94,8 @@ public class ChartPie {
      */
     private static void stylePieChart(JFreeChart chart) {
         PiePlot plot = (PiePlot) chart.getPlot();
-        
+        chart.getLegend().setFrame(BlockBorder.NONE);
+
         // Apply modern colors to pie slices
         int colorIndex = 0;
         for (Object key : plot.getDataset().getKeys()) {
