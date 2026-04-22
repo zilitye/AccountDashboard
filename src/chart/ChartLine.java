@@ -45,6 +45,7 @@ public class ChartLine {
         );
 
         styleLineChart(chart, false);
+        enableSmoothLineRendering(chart);
         return chart;
     }
 
@@ -68,6 +69,7 @@ public class ChartLine {
         );
 
         styleLineChart(chart, false);
+        enableSmoothLineRendering(chart);
         return chart;
     }
 
@@ -94,6 +96,7 @@ public class ChartLine {
                 dataset
         );
 
+        enableSmoothLineRendering(chart);
         styleLineChart(chart, true);
         return chart;
     }
@@ -141,6 +144,22 @@ public class ChartLine {
         // Title
         chart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 14));
         chart.getTitle().setPaint(new Color(17, 24, 39));
+    }
+
+    /**
+     * Enable smooth line rendering using spline interpolation
+     */
+    private static void enableSmoothLineRendering(JFreeChart chart) {
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+        
+        // Enable smooth interpolation for the line
+        renderer.setSeriesShapesVisible(0, true);
+        renderer.setSeriesLinesVisible(0, true);
+        
+        // Use larger points for better visibility
+        Shape shape = new Ellipse2D.Double(-4, -4, 8, 8);
+        renderer.setSeriesShape(0, shape);
     }
 
     /**

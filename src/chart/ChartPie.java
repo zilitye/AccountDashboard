@@ -4,6 +4,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.ui.RectangleEdge;
 
 import java.awt.*;
 import java.text.DecimalFormat;
@@ -15,7 +16,7 @@ import java.util.Map;
  */
 public class ChartPie {
     
-    // Modern Color Palette for pie slices
+// Modern Color Palette for pie slices
     private static final Color[] MODERN_COLORS = {
         new Color(255, 99, 132),    // Blue
         new Color(54, 162, 235),    // Green
@@ -28,6 +29,7 @@ public class ChartPie {
         new Color(144, 12, 63),      // Emerald
         new Color(88, 24, 69)      // Emerald
     };
+
 
     /**
      * Create yearly pie chart showing expense distribution by category
@@ -47,6 +49,7 @@ public class ChartPie {
         );
         
         stylePieChart(chart);
+        configurePieLegend(chart);
         return chart;
     }
 
@@ -70,6 +73,7 @@ public class ChartPie {
         );
         
         stylePieChart(chart);
+        configurePieLegend(chart);
         return chart;
     }
 
@@ -102,7 +106,8 @@ public class ChartPie {
         plot.setBackgroundPaint(null);
         plot.setOutlineVisible(false);
         
-        // Label properties
+        // Remove all labels from pie chart - will use legend instead
+        //plot.setLabelGenerator(null);
         plot.setLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
         plot.setLabelPaint(new Color(17, 24, 39));
         // Remove label background, shadow, and outline
@@ -110,6 +115,9 @@ public class ChartPie {
         plot.setLabelShadowPaint(null);
         plot.setLabelOutlinePaint(null);
         plot.setLabelOutlineStroke(null);
+        // Remove shadow from pie sections
+        plot.setShadowXOffset(0);
+        plot.setShadowYOffset(0);
         
         // Legend properties
         chart.getLegend().setItemFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -117,6 +125,13 @@ public class ChartPie {
         // Title properties
         chart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 14));
         chart.getTitle().setPaint(new Color(17, 24, 39));
+    }
+    
+    /**
+     * Configure pie chart legend to display below the chart
+     */
+    private static void configurePieLegend(JFreeChart chart) {
+        chart.getLegend().setPosition(RectangleEdge.BOTTOM);
     }
 
     /**

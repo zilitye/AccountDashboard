@@ -33,7 +33,7 @@ public class ChartFrame extends JPanel {
     private void initializeFrame(JFreeChart chart) {
         setLayout(new BorderLayout());
         setBackground(COLOR_BACKGROUND);
-        /*setBorder(new EmptyBorder(12, 12, 12, 12));*/
+        setBorder(new EmptyBorder(0, 0, 0, 0));
         
         // Configure chart appearance with modern styling
         styleChart(chart);
@@ -46,11 +46,8 @@ public class ChartFrame extends JPanel {
         chartPanel.setDomainZoomable(true);
         chartPanel.setBackground(COLOR_PANEL_BG);
         
-        // Add border for separation
-        /*chartPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER, 1),
-            new EmptyBorder(8, 8, 8, 8)
-        ));*/
+        // No border for the chart panel
+        chartPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
         
         add(chartPanel, BorderLayout.CENTER);
     }
@@ -71,7 +68,7 @@ public class ChartFrame extends JPanel {
         
         // Plot background
         if (chart.getPlot() != null) {
-            chart.getPlot().setBackgroundPaint(COLOR_BACKGROUND);
+            //chart.getPlot().setBackgroundPaint(COLOR_BACKGROUND);
             chart.getPlot().setOutlineVisible(false);
             
             // Configure grid lines for better readability
