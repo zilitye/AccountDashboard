@@ -4,6 +4,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.data.category.DefaultCategoryDataset;
 import java.awt.geom.Ellipse2D;
 
@@ -125,7 +126,13 @@ public class ChartLine {
         plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
         plot.getRangeAxis().setLabelPaint(AXIS_COLOR);
         plot.getRangeAxis().setTickLabelPaint(AXIS_COLOR);
+        // Auto-scale Y-axis to fit data range (start from minimum value, not 0)
+        if (plot.getRangeAxis() instanceof NumberAxis) {
+            NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+            rangeAxis.setAutoRangeIncludesZero(false);
+        }
         
+        // 
         // Renderer (line styling)
         LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
         
