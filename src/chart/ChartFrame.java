@@ -34,7 +34,7 @@ public class ChartFrame extends JPanel {
         setLayout(new BorderLayout());
         setBackground(COLOR_BACKGROUND);
         setBorder(new EmptyBorder(0, 0, 0, 0));
-        
+
         // Configure chart appearance with modern styling
         styleChart(chart);
         

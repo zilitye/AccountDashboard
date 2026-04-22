@@ -356,7 +356,7 @@ private JPanel createChartsContainer() {
         amountField.setAlignmentX(Component.LEFT_ALIGNMENT);
         amountField.setBorder(BorderFactory.createCompoundBorder(
             new RoundedBorder(COLOR_BORDER, RADIUS),
-            BorderFactory.createEmptyBorder(35, 8, 4, 8)
+            BorderFactory.createEmptyBorder(6, 8, 6, 8)
         ));
         card.add(amountField);
         card.add(Box.createVerticalStrut(14));
