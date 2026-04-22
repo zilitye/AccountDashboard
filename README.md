@@ -11,6 +11,9 @@ instance of connection is established to the database. Refers Appendix 2.
 the dataset in Lab 1 by making query from Lab 1 repository. The graph must include chart 
 title, label axis x and y.
 
+## Demo
+![demo](demo.png)
+
 ## Objectives
 1. Develop a non-visual JavaBean following standard JavaBean conventions 
 2. Implement persistence using Serializable interface 
@@ -62,5 +65,3 @@ https://sourcemaking.com/design_patterns/singleton, March 2015
 2. JFreeChart1.5.6, Retrieved from http://www.jfree.org/jfreechart/ 
 3. XChart, Retrieved from https://knowm.org/open-source/xchart/
 
-## Demo
-![demo](demo.png)
