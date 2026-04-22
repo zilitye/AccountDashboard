@@ -17,6 +17,9 @@ title, label axis x and y.
 ## Sequence Diagram
 ![demo2](demo2.png)
 
+## Package Structure
+![demo3](demo3.png)
+
 ## Objectives
 1. Develop a non-visual JavaBean following standard JavaBean conventions 
 2. Implement persistence using Serializable interface 
