@@ -13,6 +13,8 @@ title, label axis x and y.
 
 ## Demo
 ![demo](demo.png)
+
+## Sequence Diagram
 ![demo2](demo2.png)
 
 ## Objectives
