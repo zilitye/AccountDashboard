@@ -21,10 +21,10 @@ title, label axis x and y.
 develop a JavaBean named: com.ex.calculate.ExpensesCompute
 
 The bean must: 
-• Have a no-argument constructor 
-• Implement the Serializable interface 
-• Import necessary packages 
-• Act as a non-visual component
+- Have a no-argument constructor 
+- Implement the Serializable interface 
+- Import necessary packages 
+- Act as a non-visual component
 
 ## Required Methods
 1. Yearly Total Expenses  → Sum of all expenses for the year 
