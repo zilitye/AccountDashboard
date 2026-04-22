@@ -1,4 +1,4 @@
-## Purpose
+## Account Dashboard
 The application must be construct using database, design pattern, component (i.e. 
 ExpensesCompute bean) and program library (i.e. Chart library):  
 - ExpensesCompute bean is a pre-fabricated bean to calculate relevant spending 
