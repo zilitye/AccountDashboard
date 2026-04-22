@@ -5,7 +5,7 @@ ExpensesCompute bean) and program library (i.e. Chart library):
 information (Appendix 1) 
 - Database to store a dataset of year, month, expenses category and amount spend as 
 shown in Table 1. 
-- Use Singleton [\[1\]](https://sourcemaking.com/design_patterns/singleton) design pattern for the SQLConnection class to ensure only one 
+- Use Singleton^[\[1\]](https://sourcemaking.com/design_patterns/singleton) design pattern for the SQLConnection class to ensure only one 
 instance of connection is established to the database. Refers Appendix 2.  
 - Use program library (e.g. JFreeChart [2], XChart [3] etc.) to generate graph to represents 
 the dataset in Lab 1 by making query from Lab 1 repository. The graph must include chart 
