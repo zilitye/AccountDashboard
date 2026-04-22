@@ -13,6 +13,7 @@ title, label axis x and y.
 
 ## Demo
 ![demo](demo.png)
+![demo2](demo2.png)
 
 ## Objectives
 1. Develop a non-visual JavaBean following standard JavaBean conventions 
