@@ -26,6 +26,8 @@ public class ExpensesComputeApplication extends JFrame {
     private JLabel currentMonthSpendingLabel;
     private JLabel currentMonthNameLabel;
     private JLabel averageExpensesLabel;
+    private JLabel yearlyTotalLabel;
+    private JLabel monthChangeLabel;
     private JButton tabButtonMonth, tabButtonYear;
     private int currentViewMode = 1; // 1=Month, 2=Year
 
@@ -253,6 +255,14 @@ private JPanel createChartsContainer() {
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
         inner.setBackground(COLOR_BACKGROUND);
 
+        // ── Yearly Total card ──
+        inner.add(buildStatCard("Yearly Total Expenses", yearlyTotalLabelRef(), COLOR_PRIMARY));
+        inner.add(Box.createVerticalStrut(12));
+
+        // ── Month-to-Month Change card ──
+        inner.add(buildStatCard("Month-to-Month Change", monthChangeLabelRef(), COLOR_ACCENT));
+        inner.add(Box.createVerticalStrut(12));
+
         // ── Average Expenses card ──
         inner.add(buildStatCard("Average Monthly Expenses",
                                 averageExpensesLabelRef(), COLOR_ACCENT));
@@ -273,6 +283,19 @@ private JPanel createChartsContainer() {
         sp.getViewport().setBackground(COLOR_BACKGROUND);
         outer.add(sp, BorderLayout.CENTER);
         return outer;
+    }
+    private JLabel yearlyTotalLabelRef() {
+        yearlyTotalLabel = new JLabel("RM 0.00");
+        yearlyTotalLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        yearlyTotalLabel.setForeground(COLOR_PRIMARY);
+        return yearlyTotalLabel;
+    }
+
+    private JLabel monthChangeLabelRef() {
+        monthChangeLabel = new JLabel("0.0% (N/A)");
+        monthChangeLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        monthChangeLabel.setForeground(COLOR_ACCENT);
+        return monthChangeLabel;
     }
 
     // Helpers to initialise labels before building cards
@@ -386,9 +409,21 @@ private JPanel createChartsContainer() {
         try {
             double monthlyTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
             double avgMonthly   = compute.getAverageMonthlyExpenses(selectedYear);
+            double yearlyTotal  = compute.getYearlyTotal(selectedYear);
+
+            // Month-to-month change
+            int prevMonth = selectedMonth - 1;
+            double prevTotal = prevMonth > 0 ? compute.getMonthlyTotal(selectedYear, prevMonth) : 0;
+            double percentChange = (prevMonth > 0 && prevTotal != 0) ? ((monthlyTotal - prevTotal) / prevTotal) * 100.0 : 0;
+            String changeText = (prevMonth > 0 && prevTotal != 0)
+                ? String.format("%.1f%% (%s)", percentChange, percentChange >= 0 ? "+" : "")
+                : "N/A";
 
             currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
             averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
+            yearlyTotalLabel.setText(String.format("RM %.2f", yearlyTotal));
+            monthChangeLabel.setText(prevMonth > 0 && prevTotal != 0 ? String.format("%.1f%% (%s%.2f)", percentChange, percentChange >= 0 ? "+" : "", monthlyTotal - prevTotal) : "N/A");
+
             if (currentMonthNameLabel != null) {
                 currentMonthNameLabel.setText(monthSelector.getItemAt(selectedMonth - 1) + " " + selectedYear);
             }

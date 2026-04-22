@@ -5,7 +5,6 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.block.BlockBorder;
 import org.jfree.data.category.DefaultCategoryDataset;
 import java.awt.geom.Ellipse2D;
 
@@ -108,8 +107,7 @@ public class ChartLine {
      */
     private static void styleLineChart(JFreeChart chart, boolean isCategorySpecific) {
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        chart.getLegend().setFrame(BlockBorder.NONE);
-
+        
         // Background
         plot.setBackgroundPaint(null);
         plot.setOutlineVisible(false);
