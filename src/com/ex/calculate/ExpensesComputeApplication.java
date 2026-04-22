@@ -46,7 +46,7 @@ public class ExpensesComputeApplication extends JFrame {
     private static final int   RADIUS            = 12;
 
     public ExpensesComputeApplication() {
-        super("Expense Dashboard");
+        super("Account Dashboard");
         compute = new ExpensesCompute();
 
         try {
