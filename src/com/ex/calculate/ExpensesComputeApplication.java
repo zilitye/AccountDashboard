@@ -24,7 +24,7 @@ public class ExpensesComputeApplication extends JFrame {
     private JPanel chartRightPanel;
     private JComboBox<String> monthSelector;
     private JLabel currentMonthSpendingLabel;
-    private JLabel currentMonthNameLabel;
+    //private JLabel currentMonthNameLabel;
     private JLabel averageExpensesLabel;
     private JLabel yearlyTotalLabel;
     private JLabel monthChangeLabel;
@@ -335,7 +335,7 @@ private JPanel createChartsContainer() {
         currentMonthSpendingLabel = new JLabel("RM 0.00");
         currentMonthSpendingLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
         currentMonthSpendingLabel.setForeground(COLOR_PRIMARY);
-        currentMonthNameLabel = new JLabel("–");
+        //currentMonthNameLabel = new JLabel("–");
         return currentMonthSpendingLabel;
     }
 
