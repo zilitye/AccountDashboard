@@ -36,7 +36,7 @@ public class ExpensesComputeApplication extends JFrame {
     private int selectedMonth = LocalDate.now().getMonthValue();
 
     // Light theme color palette
-    private static final Color COLOR_BACKGROUND  = new Color(245, 246, 250);
+    private static final Color COLOR_BACKGROUND  = new Color(255, 255, 255);
     private static final Color COLOR_SURFACE     = new Color(255, 255, 255);
     private static final Color COLOR_CARD        = new Color(255, 255, 255);
     private static final Color COLOR_PRIMARY     = new Color(59, 130, 246);   // blue
