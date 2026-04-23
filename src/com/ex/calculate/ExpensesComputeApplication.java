@@ -28,6 +28,8 @@ public class ExpensesComputeApplication extends JFrame {
     private JLabel averageExpensesLabel;
     private JLabel yearlyTotalLabel;
     private JLabel monthChangeLabel;
+    private JPanel monthChangeStripe; // add as a class field
+    private JPanel categorySummaryPanel; // yearly total by category rows
     private JButton tabButtonMonth, tabButtonYear;
     private int currentViewMode = 1; // 1=Month, 2=Year
 
@@ -41,11 +43,13 @@ public class ExpensesComputeApplication extends JFrame {
     private static final Color COLOR_CARD        = new Color(255, 255, 255);
     private static final Color COLOR_PRIMARY     = new Color(59, 130, 246);   // blue
     private static final Color COLOR_ACCENT      = new Color(16, 185, 129);   // green
-    //private static final Color COLOR_DANGER      = new Color(239, 68, 68);    // red
+    private static final Color COLOR_DANGER      = new Color(239, 68, 68);    // red
     private static final Color COLOR_TEXT        = new Color(17, 24, 39);
     private static final Color COLOR_TEXT_SEC    = new Color(107, 114, 128);
     private static final Color COLOR_BORDER      = new Color(209, 213, 219);
     private static final int   RADIUS            = 12;
+
+
 
     public ExpensesComputeApplication() {
         super("Account Dashboard");
@@ -258,10 +262,27 @@ private JPanel createChartsContainer() {
         // ── Yearly Total card ──
         inner.add(buildStatCard("Yearly Total Expenses", yearlyTotalLabelRef(), COLOR_PRIMARY));
         inner.add(Box.createVerticalStrut(12));
+        int prevMonth = selectedMonth - 1;
 
+        double monthChange = (prevMonth > 0)
+            ? compute.getMonthComparison(selectedYear, prevMonth, selectedMonth)
+            : 0;
         // ── Month-to-Month Change card ──
-        inner.add(buildStatCard("Month-to-Month Change", monthChangeLabelRef(), COLOR_ACCENT));
+
+        JLabel changeLabel = monthChangeLabelRef();
+
+        // Apply conditional color to changeLabel itself
+        if (monthChange < 0) {
+            changeLabel.setForeground(COLOR_DANGER);
+        } else if (monthChange > 0) {
+            changeLabel.setForeground(COLOR_ACCENT);
+        } else {
+            changeLabel.setForeground(Color.GRAY);
+        }
+
+        inner.add(buildStatCard("Month-to-Month Change", changeLabel, changeLabel.getForeground()));
         inner.add(Box.createVerticalStrut(12));
+
 
         // ── Average Expenses card ──
         inner.add(buildStatCard("Average Monthly Expenses",
@@ -275,6 +296,10 @@ private JPanel createChartsContainer() {
 
         // ── Add Expense form card ──
         inner.add(createAddExpenseCard());
+        inner.add(Box.createVerticalStrut(12));
+
+        // ── Yearly Total by Category card ──
+        inner.add(createCategoryBreakdownCard());
         inner.add(Box.createVerticalGlue());
 
         JScrollPane sp = new JScrollPane(inner);
@@ -294,7 +319,7 @@ private JPanel createChartsContainer() {
     private JLabel monthChangeLabelRef() {
         monthChangeLabel = new JLabel("0.0% (N/A)");
         monthChangeLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        monthChangeLabel.setForeground(COLOR_ACCENT);
+        //monthChangeLabel.setForeground(COLOR_ACCENT);
         return monthChangeLabel;
     }
 
@@ -329,6 +354,11 @@ private JPanel createChartsContainer() {
         stripe.setBackground(accentColor);
         stripe.setMaximumSize(new Dimension(3, 30));
         stripe.setPreferredSize(new Dimension(3, 30));
+
+        // If this is the monthChange card, save the reference
+        if (valueLabel == monthChangeLabel) {
+            monthChangeStripe = stripe;
+        }
 
         JPanel row = new JPanel(new BorderLayout(8, 0));
         row.setBackground(COLOR_CARD);
@@ -400,6 +430,100 @@ private JPanel createChartsContainer() {
     }
 
     // ─────────────────────────────────────────────
+    // YEARLY TOTAL BY CATEGORY CARD
+    // ─────────────────────────────────────────────
+    private JPanel createCategoryBreakdownCard() {
+        JPanel card = createCard();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+        JLabel title = new JLabel("Yearly Total by Category");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        title.setForeground(COLOR_TEXT);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(title);
+        card.add(Box.createVerticalStrut(10));
+
+        categorySummaryPanel = new JPanel();
+        categorySummaryPanel.setLayout(new BoxLayout(categorySummaryPanel, BoxLayout.Y_AXIS));
+        categorySummaryPanel.setBackground(COLOR_CARD);
+        categorySummaryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(categorySummaryPanel);
+
+        return card;
+    }
+
+    private void updateCategoryBreakdown() {
+        if (categorySummaryPanel == null) return;
+        categorySummaryPanel.removeAll();
+
+        Map<String, Double> totals = compute.getTotalsByCategory(selectedYear, null);
+
+        // Category accent colors cycling
+        Color[] catColors = {
+            new Color(59, 130, 246),   // blue
+            new Color(16, 185, 129),   // green
+            new Color(245, 158, 11),   // amber
+            new Color(239, 68, 68),    // red
+            new Color(139, 92, 246),   // purple
+            new Color(236, 72, 153),   // pink
+            new Color(20, 184, 166),   // teal
+        };
+
+        if (totals.isEmpty()) {
+            JLabel empty = new JLabel("No data for " + selectedYear);
+            empty.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            empty.setForeground(COLOR_TEXT_SEC);
+            empty.setAlignmentX(Component.LEFT_ALIGNMENT);
+            categorySummaryPanel.add(empty);
+        } else {
+            int colorIdx = 0;
+            for (Map.Entry<String, Double> entry : totals.entrySet()) {
+                Color rowColor = catColors[colorIdx % catColors.length];
+                colorIdx++;
+
+                JPanel row = new JPanel(new BorderLayout(6, 0));
+                row.setBackground(COLOR_CARD);
+                row.setAlignmentX(Component.LEFT_ALIGNMENT);
+                row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+
+                // colored dot
+                JPanel dot = new JPanel() {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        super.paintComponent(g);
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                        g2.setColor(rowColor);
+                        g2.fillOval(0, (getHeight() - 8) / 2, 8, 8);
+                        g2.dispose();
+                    }
+                };
+                dot.setOpaque(false);
+                dot.setPreferredSize(new Dimension(12, 20));
+
+                JLabel catLabel = new JLabel(entry.getKey());
+                catLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                catLabel.setForeground(COLOR_TEXT);
+
+                JLabel amtLabel = new JLabel(String.format("RM %.2f", entry.getValue()));
+                amtLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                amtLabel.setForeground(rowColor);
+
+                row.add(dot, BorderLayout.WEST);
+                row.add(catLabel, BorderLayout.CENTER);
+                row.add(amtLabel, BorderLayout.EAST);
+
+                categorySummaryPanel.add(row);
+                categorySummaryPanel.add(Box.createVerticalStrut(6));
+            }
+        }
+
+        categorySummaryPanel.revalidate();
+        categorySummaryPanel.repaint();
+    }
+
+    // ─────────────────────────────────────────────
     // UPDATE CHARTS
     // ─────────────────────────────────────────────
     private void updateCharts() {
@@ -410,22 +534,42 @@ private JPanel createChartsContainer() {
             double monthlyTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
             double avgMonthly   = compute.getAverageMonthlyExpenses(selectedYear);
             double yearlyTotal  = compute.getYearlyTotal(selectedYear);
-
-            // Month-to-month change
             int prevMonth = selectedMonth - 1;
-            double prevTotal = prevMonth > 0 ? compute.getMonthlyTotal(selectedYear, prevMonth) : 0;
-            double percentChange = (prevMonth > 0 && prevTotal != 0) ? ((monthlyTotal - prevTotal) / prevTotal) * 100.0 : 0;
-            String changeText = (prevMonth > 0 && prevTotal != 0)
+            // Month-to-month change
+            double monthChange = compute.getMonthComparison(selectedYear, prevMonth, selectedMonth);
+            /*String changeText = (prevMonth > 0 && prevTotal != 0)
                 ? String.format("%.1f%% (%s)", percentChange, percentChange >= 0 ? "+" : "")
-                : "N/A";
+                : "N/A";*/
 
             currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
             averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
             yearlyTotalLabel.setText(String.format("RM %.2f", yearlyTotal));
-            monthChangeLabel.setText(prevMonth > 0 && prevTotal != 0 ? String.format("%.1f%% (%s%.2f)", percentChange, percentChange >= 0 ? "+" : "", monthlyTotal - prevTotal) : "N/A");
 
-            if (currentMonthNameLabel != null) {
-                currentMonthNameLabel.setText(monthSelector.getItemAt(selectedMonth - 1) + " " + selectedYear);
+
+            // Build label text with sign preserved
+            String formatted = String.format("%+.1f%% (%s%.2f)", 
+                monthChange,
+                monthChange >= 0 ? "+" : "-", 
+                monthChange > 0 
+                    ? monthlyTotal - (monthlyTotal / (1 + monthChange / 100)) 
+                    : monthlyTotal - (monthlyTotal / (1 - monthChange / 100))
+            );
+            monthChangeLabel.setText(monthChange != 0 ? formatted : "N/A");
+
+            Color changeColor;
+            if (monthChange < 0) {
+                changeColor = COLOR_DANGER;
+            } else if (monthChange > 0) {
+                changeColor = COLOR_ACCENT;
+            } else {
+                changeColor = Color.GRAY;
+            }
+
+            monthChangeLabel.setForeground(changeColor);
+
+            if (monthChangeStripe != null) {
+                monthChangeStripe.setBackground(changeColor);
+                monthChangeStripe.repaint();
             }
 
             JPanel leftChart, rightChart;
@@ -460,6 +604,8 @@ private JPanel createChartsContainer() {
         chartLeftPanel.repaint();
         chartRightPanel.revalidate();
         chartRightPanel.repaint();
+
+        updateCategoryBreakdown();
     }
 
     private JFreeChart applyLightTheme(JFreeChart chart) {
@@ -508,6 +654,16 @@ private JPanel createChartsContainer() {
                 "Invalid Input", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    // ─────────────────────────────────────────────
+    // MONTH COMPARISON
+    // ─────────────────────────────────────────────
+    /*private double getMonthComparison() {
+        int prevMonth = selectedMonth - 1;
+        double prevTotal = prevMonth > 0 ? compute.getMonthlyTotal(selectedYear, prevMonth) : 0;
+        double currentTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
+        return (prevMonth > 0 && prevTotal != 0) ? ((currentTotal - prevTotal) / prevTotal) * 100.0 : 0;
+    }*/
 
     // ─────────────────────────────────────────────
     // HELPERS
