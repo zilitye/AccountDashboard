@@ -592,7 +592,7 @@ public class ExpensesComputeApplication extends JFrame {
     // ════════════════════════════════════════════════════════════════════════
     private void showAddExpenseDialog() {
         JDialog dlg = new JDialog(this, "Add Expense", true);
-        dlg.setSize(380, 340);
+        dlg.setSize(380, 345);
         dlg.setResizable(false);
         dlg.setLocationRelativeTo(this);
 
