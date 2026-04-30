@@ -27,27 +27,11 @@ A Java-based financial dashboard application that uses JavaBeans, Singleton desi
 
 ## Required Methods
 1. Yearly Total Expenses
-    Input: int[]
-    Output: int
-
 2. Monthly Total Expenses
-    Input: int[]
-    Output: int
-
 3. Yearly Total by Category
-    Input: int[]
-    Output: int
-
 4. Average Monthly Expenses
-    Input: (int totalYearly, int months)
-    Output: double
-
 5. Month-to-Month Comparison
-    Input: (int jan, int feb)
-    Output: int (difference)
-
 6. Percentage Change Between Months
-    Formula: ((Feb - Jan) / Jan) × 100
 
 ## Demo
 ![demo](demo.png)
