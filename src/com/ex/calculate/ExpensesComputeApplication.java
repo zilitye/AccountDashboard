@@ -279,9 +279,9 @@ public class ExpensesComputeApplication extends JFrame {
                 if (isActive()) {
                     // white pill with subtle drop shadow
                     g2.setColor(new Color(0,0,0,25));
-                    g2.fillRoundRect(1, 2, getWidth()-2, getHeight(), 7, 7);
+                    g2.fillRoundRect(1, 2, getWidth(), getHeight(), 7, 7);
                     g2.setColor(CARD_BG);
-                    g2.fillRoundRect(0, 0, getWidth(), getHeight()-1, 7, 7);
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 7, 7);
                 }
                 g2.setFont(getFont());
                 g2.setColor(getForeground());
