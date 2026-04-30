@@ -1,15 +1,33 @@
 ## Account Dashboard
-The application must be construct using database, design pattern, component (i.e. 
-ExpensesCompute bean) and program library (i.e. Chart library):  
-- ExpensesCompute bean is a pre-fabricated bean to calculate relevant spending 
-information (Appendix 1) 
-- Database to store a dataset of year, month, expenses category and amount spend as 
-shown in Table 1. 
-- Use [Singleton](https://sourcemaking.com/design_patterns/singleton) design pattern for the SQLConnection class to ensure only one 
-instance of connection is established to the database. Refers Appendix 2.  
-- Use program library (e.g. JFreeChart [2], XChart [3] etc.) to generate graph to represents 
-the dataset in Lab 1 by making query from Lab 1 repository. The graph must include chart 
-title, label axis x and y.
+A Java-based financial dashboard application that uses JavaBeans, Singleton design pattern, MySQL database, and chart libraries (JFreeChart/XChart) to compute and visualize expense data.
+
+🚀 Features
+ExpensesCompute Bean
+
+Non-visual JavaBean following standard conventions
+
+Implements Serializable for persistence
+
+Provides methods for yearly totals, monthly totals, category totals, averages, comparisons, and percentage changes
+
+Database Integration
+
+MySQL schema with fields: year, month, category, amount
+
+Singleton SQLConnection ensures only one connection instance
+
+Charts & Visualization
+
+Line, bar, and pie charts generated using JFreeChart/XChart
+
+Includes chart titles, X/Y axis labels, and legends
+
+Design Patterns
+
+Singleton for database connection
+
+JavaBean for computation logic
+
 
 ## Demo
 ![demo](demo.png)
