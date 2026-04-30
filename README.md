@@ -22,14 +22,6 @@ A Java-based financial dashboard application that uses JavaBeans, Singleton desi
 ## Sequence Diagram
 ![demo2](demo2.png)
 
-## Required Methods
-1. Yearly Total Expenses
-2. Monthly Total Expenses
-3. Yearly Total by Category
-4. Average Monthly Expenses
-5. Month-to-Month Comparison
-6. Percentage Change Between Months
-
 ## Demo
 ![demo](demo.png)
 
