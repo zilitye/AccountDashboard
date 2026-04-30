@@ -8,22 +8,16 @@ A Java-based financial dashboard application that uses JavaBeans, Singleton desi
     - Provides methods for yearly totals, monthly totals, category totals, averages, comparisons, and percentage changes
 
 - Database Integration
-
-MySQL schema with fields: year, month, category, amount
-
-Singleton SQLConnection ensures only one connection instance
+    - MySQL schema with fields: year, month, category, amount
+    - Singleton SQLConnection ensures only one connection instance
 
 - Charts & Visualization
-
-Line, bar, and pie charts generated using JFreeChart/XChart
-
-Includes chart titles, X/Y axis labels, and legends
+    - Line, bar, and pie charts generated using JFreeChart/XChart
+    - Includes chart titles, X/Y axis labels, and legends
 
 - Design Patterns
-
-Singleton for database connection
-
-JavaBean for computation logic
+    - Singleton for database connection
+    - JavaBean for computation logic
 
 
 ## Demo
