@@ -25,6 +25,9 @@ Account Dashboard is a Java application that combines JavaBeans, Swing, and MySQ
 ## Demo
 [![Download](https://img.shields.io/badge/Download-v1.0.0-blue?style=flat-square)](https://github.com/zilitye/AccountDashboard/releases/download/SwingV1.0.0/AccountDashboard.jar)
 
+Run demo with `java -jar AccountDashboard-<version>.jar` (or double‑click it). Requires Java 8 or newer.
+
+
 ![demo](demo.png)
 
 ## Submission
