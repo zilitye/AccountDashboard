@@ -3,12 +3,9 @@ A Java-based financial dashboard application that uses JavaBeans, Singleton desi
 
 ## Features
 - ExpensesCompute Bean
-
-Non-visual JavaBean following standard conventions
-
-Implements Serializable for persistence
-
-Provides methods for yearly totals, monthly totals, category totals, averages, comparisons, and percentage changes
+    - Non-visual JavaBean following standard conventions
+    - Implements Serializable for persistence
+    - Provides methods for yearly totals, monthly totals, category totals, averages, comparisons, and percentage changes
 
 - Database Integration
 
