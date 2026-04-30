@@ -1,8 +1,8 @@
 ## Account Dashboard
 A Java-based financial dashboard application that uses JavaBeans, Singleton design pattern, MySQL database, and chart libraries (JFreeChart/XChart) to compute and visualize expense data.
 
-🚀 Features
-ExpensesCompute Bean
+## Features
+- ExpensesCompute Bean
 
 Non-visual JavaBean following standard conventions
 
@@ -10,19 +10,19 @@ Implements Serializable for persistence
 
 Provides methods for yearly totals, monthly totals, category totals, averages, comparisons, and percentage changes
 
-Database Integration
+- Database Integration
 
 MySQL schema with fields: year, month, category, amount
 
 Singleton SQLConnection ensures only one connection instance
 
-Charts & Visualization
+- Charts & Visualization
 
 Line, bar, and pie charts generated using JFreeChart/XChart
 
 Includes chart titles, X/Y axis labels, and legends
 
-Design Patterns
+- Design Patterns
 
 Singleton for database connection
 
