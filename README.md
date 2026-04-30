@@ -19,9 +19,6 @@ A Java-based financial dashboard application that uses JavaBeans, Singleton desi
     - Singleton for database connection
     - JavaBean for computation logic
 
-## Project Structure
-![demo3](demo3.png)
-
 ## Sequence Diagram
 ![demo2](demo2.png)
 
