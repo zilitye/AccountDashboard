@@ -42,6 +42,10 @@ public class ExpensesComputeApplication extends JFrame {
     private JComboBox<String> monthSelector;
     private int      currentViewMode = 1;
 
+    private JLabel monthChangeIconLabel;
+    private JPanel monthChangeIconCircle;
+    private Color monthChangeAccent;
+
     // Add-expense dialog fields (created fresh each time)
     private JComboBox<String> dlgCategoryBox;
     private JTextField        dlgAmountField;
@@ -792,17 +796,36 @@ public class ExpensesComputeApplication extends JFrame {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 30));
-                g2.fillOval(0, 0, 34, 34);
-                g2.setFont(sf(Font.PLAIN, 15f));
-                g2.setColor(accent);
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(icon, (34 - fm.stringWidth(icon))/2, (34+fm.getAscent()-fm.getDescent())/2);
+
+                Color c = (monthChangeIconCircle == this && monthChangeAccent != null)
+                        ? monthChangeAccent
+                        : accent;
+
+                g2.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 30));
+                g2.fillOval(0, 0, getWidth(), getHeight());
+
                 g2.dispose();
             }
-            @Override public Dimension getPreferredSize() { return new Dimension(34, 34); }
+
+            @Override public Dimension getPreferredSize() {
+                return new Dimension(34, 34);
+            }
         };
+
+        JLabel iconLabel = new JLabel(icon);
+        iconLabel.setFont(sf(Font.PLAIN, 15f));
+        iconLabel.setForeground(accent);
+
+        iconCircle.add(iconLabel);
+
         iconCircle.setOpaque(false);
+        iconCircle.setLayout(new GridBagLayout());
+
+        if (title.equals("vs Last Month")) {
+        monthChangeIconLabel = iconLabel;
+        monthChangeIconCircle = iconCircle;
+        monthChangeAccent = accent; // initial (green)
+}
 
         JPanel iconWrap = new JPanel(new GridBagLayout());
         iconWrap.setOpaque(false);
@@ -933,8 +956,37 @@ public class ExpensesComputeApplication extends JFrame {
             currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
             averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
             yearlyTotalLabel.setText(String.format("RM %.2f", yearlyTotal));
-            monthChangeLabel.setText(monthChange != 0 ? String.format("%+.1f%%", monthChange) : "—");
-            monthChangeLabel.setForeground(monthChange < 0 ? RED : monthChange > 0 ? GREEN : LABEL_2);
+            monthChangeLabel.setText(monthChange != 0 
+                    ? String.format("%+.1f%%", monthChange) 
+                    : "—");
+
+            if (monthChange < 0) {
+                monthChangeLabel.setForeground(RED);
+
+                monthChangeIconLabel.setText("↓");
+                monthChangeIconLabel.setForeground(RED);
+
+                monthChangeAccent = RED;
+
+            } else if (monthChange > 0) {
+                monthChangeLabel.setForeground(GREEN);
+
+                monthChangeIconLabel.setText("↑");
+                monthChangeIconLabel.setForeground(GREEN);
+
+                monthChangeAccent = GREEN;
+
+            } else {
+                monthChangeLabel.setForeground(LABEL_2);
+
+                monthChangeIconLabel.setText("—");
+                monthChangeIconLabel.setForeground(LABEL_2);
+
+                monthChangeAccent = LABEL_2;
+            }
+
+            // 🔥 IMPORTANT: repaint the circle
+            monthChangeIconCircle.repaint();
 
             if (currentViewMode == 1) {
                 Map<Integer, Double> trend   = compute.getMonthlyTotals(selectedYear);
