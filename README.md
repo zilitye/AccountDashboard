@@ -19,52 +19,49 @@ A Java-based financial dashboard application that uses JavaBeans, Singleton desi
     - Singleton for database connection
     - JavaBean for computation logic
 
-## Demo
-![demo](demo.png)
+## Project Structure
+![demo3](demo3.png)
 
 ## Sequence Diagram
 ![demo2](demo2.png)
 
-## Package Structure
-![demo3](demo3.png)
-
-## Objectives
-1. Develop a non-visual JavaBean following standard JavaBean conventions 
-2. Implement persistence using Serializable interface 
-3. Manage data using arrays or ArrayList 
-4. Generate documentation using Javadoc and package the component 
-
-## Instructions
-develop a JavaBean named: com.ex.calculate.ExpensesCompute
-
-The bean must: 
-- Have a no-argument constructor 
-- Implement the Serializable interface 
-- Import necessary packages 
-- Act as a non-visual component
-
 ## Required Methods
-1. Yearly Total Expenses  → Sum of all expenses for the year 
-Parameter: array of integers 
-Return: integer 
-Example: [100, 200, 300] → total = 600 
-2. Monthly Total Expenses → Total expenses for January, February, etc. 
-Parameter: array of integers 
-Return: integer 
-Example: [100, 200, 300] → total = 600 
-3. Yearly Total by Category → Example: Total Food & Beverages in 2026 
-Parameter: array of integers 
-Return: integer 
-Example: [100, 200, 300] → total = 600 
-4. Average Monthly Expenses → Total yearly / number of months 
-Parameter: integer, integer 
-Return: double 
-Example: [1000, 4] → average monthly = 250 
-5. Month-to-Month Comparison 
-→ Difference between January and February 
-→ (Increase / Decrease) 
-6. Percentage Change Between Months 
-→ ((Feb – Jan) / Jan) × 100 
+1. Yearly Total Expenses
+
+Input: int[]
+
+Output: int
+
+2. Monthly Total Expenses
+
+Input: int[]
+
+Output: int
+
+3. Yearly Total by Category
+
+Input: int[]
+
+Output: int
+
+4. Average Monthly Expenses
+
+Input: (int totalYearly, int months)
+
+Output: double
+
+5. Month-to-Month Comparison
+
+Input: (int jan, int feb)
+
+Output: int (difference)
+
+6. Percentage Change Between Months
+
+Formula: ((Feb - Jan) / Jan) × 100
+
+## Demo
+![demo](demo.png)
 
 ## Submission
 Submission Material in ONE zipped folder, which label with your MATRIX No.: 
