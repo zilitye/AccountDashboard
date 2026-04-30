@@ -20,7 +20,7 @@ Account Dashboard is a Java application that combines JavaBeans, Swing, and MySQ
     - JavaBean for computation logic
 
 ## Sequence Diagram
-![demo2](demo2.png)
+![demo2](sequenceDiagram.png)
 
 ## Demo
 ![demo](demo.png)
