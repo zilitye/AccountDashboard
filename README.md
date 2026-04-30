@@ -1,5 +1,5 @@
 ## Account Dashboard
-A Java-based financial dashboard application that uses JavaBeans, Singleton design pattern, MySQL database, and chart libraries (JFreeChart/XChart) to compute and visualize expense data.
+Account Dashboard is a Java application that combines JavaBeans, Swing, and MySQL to manage and visualize expense data. At its core is a non‑visual JavaBean (ExpensesCompute) that handles financial computations and persistence. The system uses a Singleton SQLConnection for database access and external chart libraries (JFreeChart/XChart) to generate clear, labeled graphs of spending trends.
 
 ## Features
 - ExpensesCompute Bean
