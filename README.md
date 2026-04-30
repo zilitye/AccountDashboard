@@ -20,18 +20,31 @@ A Java-based financial dashboard application that uses JavaBeans, Singleton desi
     - JavaBean for computation logic
 
 AccountDashboard/
+
 │── src/
+
 │   └── com/ex/calculate/
+
 │       └── ExpensesCompute.java
+
 │── diagrams/
+
 │   ├── sequence_diagram.png
+
 │   ├── package_structure.png
+
 │── database/
+
 │   └── schema.sql
+
 │── screenshots/
+
 │   └── graphs.png
+
 │── build/
+
 │   └── AccountDashboard.jar
+
 │── README.md
 
 
