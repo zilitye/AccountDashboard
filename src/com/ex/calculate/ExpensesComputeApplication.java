@@ -56,6 +56,16 @@ public class ExpensesComputeApplication extends JFrame {
     private int selectedYear  = LocalDate.now().getYear();
     private int selectedMonth = LocalDate.now().getMonthValue();
 
+    // ── Page routing ─────────────────────────────────────────────────────────
+    private JPanel        pageStack;          // CardLayout host
+    private CardLayout    cardLayout;
+    private DatabasePage  databasePage;
+    private SettingsPage  settingsPage;
+    private JPanel        overviewPage;       // the original main canvas
+    private String        activePage = "Overview";
+    // Sidebar nav row references for active-state toggling
+    private JPanel navOverview, navDatabase, navSettings;
+
     // ── macOS Sonoma color tokens ────────────────────────────────────────────
     private static final Color BG           = new Color(0xf6f6f6);   // systemGroupedBackground
     private static final Color SIDEBAR_BG   = new Color(0xf6f6f6);   // sidebar vibrancy simulation
@@ -116,18 +126,34 @@ public class ExpensesComputeApplication extends JFrame {
 
         add(buildTitleBar(), BorderLayout.NORTH);
 
+        // Build pages
+        overviewPage = buildMainCanvas();
+        databasePage = new DatabasePage();
+        settingsPage = new SettingsPage();
+
+        cardLayout = new CardLayout();
+        pageStack  = new JPanel(cardLayout);
+        pageStack.setBackground(BG);
+        pageStack.add(overviewPage, "Overview");
+        pageStack.add(databasePage, "Database");
+        pageStack.add(settingsPage, "Settings");
+
         JPanel body = new JPanel(new BorderLayout());
         body.setBackground(BG);
-        body.add(buildSidebar(),     BorderLayout.WEST);
-        body.add(buildMainCanvas(),  BorderLayout.CENTER);
+        body.add(buildSidebar(),  BorderLayout.WEST);
+        body.add(pageStack,       BorderLayout.CENTER);
         add(body, BorderLayout.CENTER);
 
         setSize(1340, 840);
         setMinimumSize(new Dimension(980, 640));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setVisible(true);
-        SwingUtilities.invokeLater(this::updateCharts);
+setVisible(true);
+
+        SwingUtilities.invokeLater(() -> {
+            refreshNavHighlights("Overview"); // ✅ fix initial text color
+            updateCharts();
+        });
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -360,7 +386,13 @@ public class ExpensesComputeApplication extends JFrame {
             {"⚙", "Settings"},
         };
         for (int i = 0; i < items.length; i++) {
-            nav.add(buildNavItem(items[i][0], items[i][1], i == 0));
+            final String pageName = items[i][1];
+            boolean isActive = (i == 0);
+            JPanel navItem = buildNavItem(items[i][0], pageName, isActive, () -> switchPage(pageName));
+            if (pageName.equals("Overview"))  navOverview  = navItem;
+            if (pageName.equals("Database"))  navDatabase  = navItem;
+            if (pageName.equals("Settings"))  navSettings  = navItem;
+            nav.add(navItem);
         }
 
         sidebar.add(nav, BorderLayout.NORTH);
@@ -403,96 +435,73 @@ public class ExpensesComputeApplication extends JFrame {
     }
 
     /** Nav item with optional click action */
-    private JPanel buildNavItem(String icon, String label, boolean active, Runnable onClick) {
-        JPanel row = new JPanel(new BorderLayout()) {
-            @Override protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (active) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    // blue selection pill
-                    g2.setColor(ACCENT);
-                    g2.fillRoundRect(6, 3, getWidth()-12, getHeight()-6, 8, 8);
-                    g2.dispose();
-                }
+private JPanel buildNavItem(String icon, String label, boolean active, Runnable onClick) {
+
+    JPanel row = new JPanel(new BorderLayout()) {
+        @Override protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            boolean isActive = Boolean.TRUE.equals(getClientProperty("navActive"));
+            boolean hover    = Boolean.TRUE.equals(getClientProperty("hover"));
+
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            if (isActive) {
+                g2.setColor(ACCENT);
+                g2.fillRoundRect(6, 3, getWidth()-12, getHeight()-6, 8, 8);
+            } else if (hover) {
+                g2.setColor(new Color(0,0,0,18));
+                g2.fillRoundRect(6, 3, getWidth()-12, getHeight()-6, 8, 8);
             }
-        };
-        row.setOpaque(false);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        row.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
-        row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // icon + label in a horizontal inner panel
-        JPanel inner = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
-        inner.setOpaque(false);
-        inner.setPreferredSize(new Dimension(SIDEBAR_W - 16, 34));
+            g2.dispose();
+        }
+    };
 
-        JLabel ico = new JLabel(icon);
-        ico.setFont(sf(Font.PLAIN, 14f));
-        ico.setForeground(active ? Color.WHITE : LABEL_2);
-        ico.setPreferredSize(new Dimension(18, 18));
+    row.setOpaque(false);
+    row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+    row.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+    row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(active? UIManager.getFont(	"h3.font"): UIManager.getFont("h3.regular.font"));
-        lbl.setForeground(active ? Color.WHITE : LABEL);
+    // set initial state
+    row.putClientProperty("navActive", active);
 
-        inner.add(ico);
-        inner.add(lbl);
-        row.add(inner, BorderLayout.CENTER);
+    JPanel inner = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+    inner.setOpaque(false);
 
-        if (!active) {
-            row.addMouseListener(new MouseAdapter() {
-                @Override public void mouseEntered(MouseEvent e) {
-                    row.setOpaque(true);
-                    row.setBackground(new Color(0,0,0,0));
-                    // draw a subtle hover pill
-                    row.putClientProperty("hover", true);
-                    row.repaint();
-                }
-                @Override public void mouseExited(MouseEvent e) {
-                    row.setOpaque(false);
-                    row.putClientProperty("hover", false);
-                    row.repaint();
-                }
-                @Override public void mouseClicked(MouseEvent e) {
-                    if (onClick != null) onClick.run();
-                }
-            });
+JLabel ico = new JLabel(icon);
+ico.setFont(sf(Font.PLAIN, 14f));
+ico.setPreferredSize(new Dimension(18, 18));
+ico.setForeground(active ? Color.WHITE : LABEL_2);
 
-            // override paint to show hover state
-            // We replace with a version that reads "hover" property
+JLabel lbl = new JLabel(label);
+lbl.setFont(UIManager.getFont(active ? "h3.font" : "h3.regular.font"));
+lbl.setForeground(active ? Color.WHITE : LABEL);
+
+    inner.add(ico);
+    inner.add(lbl);
+    row.add(inner, BorderLayout.CENTER);
+
+    // hover + click
+    row.addMouseListener(new MouseAdapter() {
+        @Override public void mouseEntered(MouseEvent e) {
+            row.putClientProperty("hover", true);
+            row.repaint();
         }
 
-        if (!active) {
-            // Replace the component with one that can show hover
-            JPanel hoverRow = new JPanel(new BorderLayout()) {
-                @Override protected void paintComponent(Graphics g) {
-                    Object h = getClientProperty("hover");
-                    if (Boolean.TRUE.equals(h)) {
-                        Graphics2D g2 = (Graphics2D) g.create();
-                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                        g2.setColor(new Color(0,0,0,18));
-                        g2.fillRoundRect(6, 3, getWidth()-12, getHeight()-6, 8, 8);
-                        g2.dispose();
-                    }
-                    super.paintComponent(g);
-                }
-            };
-            hoverRow.setOpaque(false);
-            hoverRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-            hoverRow.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
-            hoverRow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            hoverRow.add(inner, BorderLayout.CENTER);
-            hoverRow.addMouseListener(new MouseAdapter() {
-                @Override public void mouseEntered(MouseEvent e) { hoverRow.putClientProperty("hover",true); hoverRow.repaint(); }
-                @Override public void mouseExited(MouseEvent e)  { hoverRow.putClientProperty("hover",false); hoverRow.repaint(); }
-                @Override public void mouseClicked(MouseEvent e) { if (onClick != null) onClick.run(); }
-            });
-            return hoverRow;
+        @Override public void mouseExited(MouseEvent e) {
+            row.putClientProperty("hover", false);
+            row.repaint();
         }
 
-        return row;
-    }
+        @Override public void mouseClicked(MouseEvent e) {
+            if (onClick != null) onClick.run();
+        }
+    });
+
+    return row;
+}
 
     private Component buildSidebarDivider() {
         JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 4));
@@ -504,6 +513,58 @@ public class ExpensesComputeApplication extends JFrame {
         line.setMaximumSize(new Dimension(SIDEBAR_W - 24, 1));
         wrap.add(line);
         return wrap;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // PAGE SWITCHER
+    // ════════════════════════════════════════════════════════════════════════
+    private void switchPage(String pageName) {
+        if (pageName.equals(activePage)) return;
+        activePage = pageName;
+
+        // Show the right card
+        cardLayout.show(pageStack, pageName);
+
+        // Refresh data-heavy pages each time they are shown
+        if (pageName.equals("Database") && databasePage != null) {
+            databasePage.loadData();
+        }
+
+        // Rebuild sidebar so active highlight moves — simplest correct approach
+        // We locate the nav panel by climbing the component tree from a known ref
+        // and repaint the three nav rows with updated active state.
+        refreshNavHighlights(pageName);
+    }
+
+    /**
+     * Updates the blue selection pill across the three nav rows without
+     * rebuilding the entire sidebar.  We reach inside each hoverRow and
+     * swap the background/foreground of the icon+label panel it contains.
+     */
+    private void refreshNavHighlights(String activeName) {
+        JPanel[] rows  = {navOverview, navDatabase, navSettings};
+        String[] names = {"Overview",  "Database",  "Settings"};
+
+        for (int i = 0; i < rows.length; i++) {
+            if (rows[i] == null) continue;
+            final boolean active = names[i].equals(activeName);
+            // Walk the inner panel to find icon and label
+            for (Component child : rows[i].getComponents()) {
+                if (child instanceof JPanel) {
+                    JPanel inner = (JPanel) child;
+                    for (Component c2 : inner.getComponents()) {
+                        if (c2 instanceof JLabel) {
+                            JLabel lbl = (JLabel) c2;
+                            lbl.setForeground(active ? Color.WHITE : (lbl.getText().length() <= 2 ? LABEL_2 : LABEL));
+                        }
+                    }
+                }
+            }
+            // Toggle the painted blue pill by storing active flag as client property
+            rows[i].putClientProperty("navActive", active);
+            rows[i].repaint();
+        }
+        setVisible(true);
     }
 
     // ════════════════════════════════════════════════════════════════════════
