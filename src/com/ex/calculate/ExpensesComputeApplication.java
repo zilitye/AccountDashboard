@@ -55,6 +55,7 @@ public class ExpensesComputeApplication extends JFrame {
     private JComboBox<String> dlgMonthBox;
     private JSpinner          dlgYearSpinner;
 
+    private SwingWorker<Void,Void> pendingWorker; // cancel stale in-flight loads
     private ExpensesCompute compute;
     private int selectedYear  = LocalDate.now().getYear();
     private int selectedMonth = LocalDate.now().getMonthValue();
@@ -1016,120 +1017,119 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
     // ════════════════════════════════════════════════════════════════════════
     // UPDATE CHARTS
     // ════════════════════════════════════════════════════════════════════════
-public void updateCharts() {
-    // Immediately clear panels and show a spinner — no DB call yet, so no freeze
-    chartLeftPanel.removeAll();
-    chartRightPanel.removeAll();
-    JLabel loading = new JLabel("Loading…");
-    loading.setForeground(LABEL_3);
-    loading.setFont(sf(Font.PLAIN, 12f));
-    loading.setHorizontalAlignment(JLabel.CENTER);
-    chartLeftPanel.add(loading, BorderLayout.CENTER);
-    chartLeftPanel.revalidate();  chartLeftPanel.repaint();
-    chartRightPanel.revalidate(); chartRightPanel.repaint();
-
-    // Reset stat cards so stale values never linger when DB is offline
-    currentMonthSpendingLabel.setText("—");
-    averageExpensesLabel.setText("—");
-    yearlyTotalLabel.setText("—");
-    monthChangeLabel.setText("—");
-    monthChangeLabel.setForeground(LABEL_2);
-    if (monthChangeIconLabel != null) {
-        monthChangeIconLabel.setText("—");
-        monthChangeIconLabel.setForeground(LABEL_2);
-        monthChangeAccent = LABEL_2;
-        monthChangeIconCircle.repaint();
-    }
-
-    // Snapshot values so the worker always uses a consistent view
-    final int year  = selectedYear;
-    final int month = selectedMonth;
-    final int mode  = currentViewMode;
-
-    new SwingWorker<Void, Void>() {
-
-        // Results computed off the EDT
-        private boolean      dbOk       = false;
-        private double       monthlyTotal, avgMonthly, yearlyTotal, monthChange;
-        private JFreeChart   leftChart, rightChart;
-        private Map<String, Double> catTotals;
-
-        @Override
-        protected Void doInBackground() {
-            // ALL blocking DB/network work happens here — EDT stays free
-            try {
-                Connection conn = SQLConnection.getInstance().getConnection();
-                if (conn == null || conn.isClosed()) return null;
-
-                monthlyTotal = compute.getMonthlyTotal(year, month);
-                avgMonthly   = compute.getAverageMonthlyExpenses(year);
-                yearlyTotal  = compute.getYearlyTotal(year);
-                monthChange  = compute.getMonthComparison(year, month - 1, month);
-                catTotals    = compute.getTotalsByCategory(year, null);
-
-                if (mode == 1) {
-                    Map<Integer, Double> trend   = compute.getMonthlyTotals(year);
-                    Map<String, Double>  monthly = compute.getTotalsByCategory(year, month);
-                    leftChart  = theme(ChartPie.createMonthlyPieChart(monthly, year, month));
-                    rightChart = theme(ChartLine.createMonthlyTrendChart(trend, year));
-                } else {
-                    Map<String, Double> yearly = compute.getTotalsByCategory(year, null);
-                    leftChart  = theme(ChartPie.createYearlyPieChart(yearly, year));
-                    rightChart = theme(ChartBar.createCategoryBarChart(yearly, "Yearly Overview", "Category", "Amount (RM)"));
-                }
-                dbOk = true;
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            return null;
+    public void updateCharts() {
+        // Cancel any in-flight worker — its done() will be a no-op
+        if (pendingWorker != null && !pendingWorker.isDone()) {
+            pendingWorker.cancel(false);
         }
 
-        @Override
-        protected void done() {
-            // Back on the EDT — safe to update Swing components
-            chartLeftPanel.removeAll();
-            chartRightPanel.removeAll();
+        // Snapshot the current selection so the worker uses consistent values
+        final int year  = selectedYear;
+        final int month = selectedMonth;
+        final int mode  = currentViewMode;
 
-            if (!dbOk) {
-                showNoDbPlaceholder();
-                updateCategoryBreakdown(null);   // clears stale chips when offline
-            } else {
-                currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
-                averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
-                yearlyTotalLabel.setText(String.format("RM %.2f", yearlyTotal));
-                monthChangeLabel.setText(monthChange != 0
-                        ? String.format("%+.1f%%", monthChange) : "—");
+        pendingWorker = new SwingWorker<Void, Void>() {
 
-                if (monthChange < 0) {
-                    monthChangeLabel.setForeground(RED);
-                    monthChangeIconLabel.setText("↓"); monthChangeIconLabel.setForeground(RED);
-                    monthChangeAccent = RED;
-                } else if (monthChange > 0) {
-                    monthChangeLabel.setForeground(GREEN);
-                    monthChangeIconLabel.setText("↑"); monthChangeIconLabel.setForeground(GREEN);
-                    monthChangeAccent = GREEN;
-                } else {
+            private boolean      dbOk = false;
+            private double       monthlyTotal, avgMonthly, yearlyTotal, monthChange;
+            private JFreeChart   leftChart, rightChart;
+            private Map<String, Double> catTotals;
+
+            @Override
+            protected Void doInBackground() {
+                // ALL blocking DB/network work here — EDT stays free
+                try {
+                    Connection conn = SQLConnection.getInstance().getConnection();
+                    if (conn == null || conn.isClosed()) return null;
+
+                    monthlyTotal = compute.getMonthlyTotal(year, month);
+                    avgMonthly   = compute.getAverageMonthlyExpenses(year);
+                    yearlyTotal  = compute.getYearlyTotal(year);
+                    monthChange  = compute.getMonthComparison(year, month - 1, month);
+                    catTotals    = compute.getTotalsByCategory(year, null);
+
+                    if (mode == 1) {
+                        Map<Integer, Double> trend   = compute.getMonthlyTotals(year);
+                        Map<String, Double>  monthly = compute.getTotalsByCategory(year, month);
+                        leftChart  = theme(ChartPie.createMonthlyPieChart(monthly, year, month));
+                        rightChart = theme(ChartLine.createMonthlyTrendChart(trend, year));
+                    } else {
+                        Map<String, Double> yearly = compute.getTotalsByCategory(year, null);
+                        leftChart  = theme(ChartPie.createYearlyPieChart(yearly, year));
+                        rightChart = theme(ChartBar.createCategoryBarChart(yearly, "Yearly Overview", "Category", "Amount (RM)"));
+                    }
+                    dbOk = true;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                // Discard result if this worker was cancelled (a newer one is running)
+                if (isCancelled()) return;
+
+                // ── Atomic swap: clear + repopulate in one EDT pass ───────────
+                if (!dbOk) {
+                    // Reset cards
+                    currentMonthSpendingLabel.setText("—");
+                    averageExpensesLabel.setText("—");
+                    yearlyTotalLabel.setText("—");
+                    monthChangeLabel.setText("—");
                     monthChangeLabel.setForeground(LABEL_2);
-                    monthChangeIconLabel.setText("—"); monthChangeIconLabel.setForeground(LABEL_2);
-                    monthChangeAccent = LABEL_2;
+                    if (monthChangeIconLabel != null) {
+                        monthChangeIconLabel.setText("—");
+                        monthChangeIconLabel.setForeground(LABEL_2);
+                        monthChangeAccent = LABEL_2;
+                        monthChangeIconCircle.repaint();
+                    }
+                    // Clear charts
+                    chartLeftPanel.removeAll();
+                    chartRightPanel.removeAll();
+                    showNoDbPlaceholder();
+                    updateCategoryBreakdown(null);
+                } else {
+                    // Update cards
+                    currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
+                    averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
+                    yearlyTotalLabel.setText(String.format("RM %.2f", yearlyTotal));
+                    monthChangeLabel.setText(monthChange != 0
+                            ? String.format("%+.1f%%", monthChange) : "—");
+
+                    if (monthChange < 0) {
+                        monthChangeLabel.setForeground(RED);
+                        monthChangeIconLabel.setText("↓"); monthChangeIconLabel.setForeground(RED);
+                        monthChangeAccent = RED;
+                    } else if (monthChange > 0) {
+                        monthChangeLabel.setForeground(GREEN);
+                        monthChangeIconLabel.setText("↑"); monthChangeIconLabel.setForeground(GREEN);
+                        monthChangeAccent = GREEN;
+                    } else {
+                        monthChangeLabel.setForeground(LABEL_2);
+                        monthChangeIconLabel.setText("—"); monthChangeIconLabel.setForeground(LABEL_2);
+                        monthChangeAccent = LABEL_2;
+                    }
+                    monthChangeIconCircle.repaint();
+
+                    // Swap charts atomically — old content stays until new is ready
+                    chartLeftPanel.removeAll();
+                    chartRightPanel.removeAll();
+                    ChartFrame lf = new ChartFrame(leftChart);
+                    lf.setPreferredSize(new Dimension(340, 320));
+                    ChartFrame rf = new ChartFrame(rightChart);
+                    rf.setPreferredSize(new Dimension(400, 320));
+                    chartLeftPanel.add(lf, BorderLayout.CENTER);
+                    chartRightPanel.add(rf, BorderLayout.CENTER);
+                    updateCategoryBreakdown(catTotals);
                 }
-                monthChangeIconCircle.repaint();
 
-                ChartFrame lf = new ChartFrame(leftChart);
-                lf.setPreferredSize(new Dimension(340, 320));
-                ChartFrame rf = new ChartFrame(rightChart);
-                rf.setPreferredSize(new Dimension(400, 320));
-                chartLeftPanel.add(lf, BorderLayout.CENTER);
-                chartRightPanel.add(rf, BorderLayout.CENTER);
-
-                updateCategoryBreakdown(catTotals);  // pass pre-fetched data, no extra DB call
+                chartLeftPanel.revalidate();  chartLeftPanel.repaint();
+                chartRightPanel.revalidate(); chartRightPanel.repaint();
             }
-
-            chartLeftPanel.revalidate();  chartLeftPanel.repaint();
-            chartRightPanel.revalidate(); chartRightPanel.repaint();
-        }
-    }.execute();
-}
+        };
+        pendingWorker.execute();
+    }
 
 // ── Extracted helper ───────────────────────────────────────────────────────
 private void showNoDbPlaceholder() {
