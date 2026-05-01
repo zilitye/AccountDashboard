@@ -31,8 +31,8 @@ Run demo with `java -jar AccountDashboard-<version>.jar` (or double‑click it).
 
 ## References
 1. Singleton Design Pattern, Retrieved from 
-https://sourcemaking.com/design_patterns/singleton, March 2015 
-2. JFreeChart1.5.6, Retrieved from http://www.jfree.org/jfreechart/
+https://sourcemaking.com/design_patterns/singleton
+2. JFreeChart, Retrieved from http://www.jfree.org/jfreechart/
 3. XChart, Retrieved from https://knowm.org/open-source/xchart/
 4. Flatlaf, Retrieved from https://github.com/JFormDesigner/FlatLaf
 
