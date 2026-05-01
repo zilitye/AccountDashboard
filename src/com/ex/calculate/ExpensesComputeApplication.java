@@ -532,10 +532,11 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         if (pageName.equals("Database") && databasePage != null) {
             databasePage.loadData();
         }
+        // Always refresh Overview so stale values never linger
+        if (pageName.equals("Overview")) {
+            updateCharts();
+        }
 
-        // Rebuild sidebar so active highlight moves — simplest correct approach
-        // We locate the nav panel by climbing the component tree from a known ref
-        // and repaint the three nav rows with updated active state.
         refreshNavHighlights(pageName);
     }
 
@@ -615,7 +616,7 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         appName.setForeground(LABEL);
         appName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel version = new JLabel("Version 1.2.0");
+        JLabel version = new JLabel("Version 1.1.0");
         version.setFont(sf(Font.PLAIN, 12f));
         version.setForeground(LABEL_2);
         version.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -644,6 +645,8 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         closeBtn.setMaximumSize(new Dimension(80, 30));
         closeBtn.addActionListener(e -> dlg.dispose());
 
+        root.add(iconCircle);
+        root.add(Box.createVerticalStrut(12));
         root.add(appName);
         root.add(Box.createVerticalStrut(4));
         root.add(version);
@@ -940,12 +943,12 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         return card;
     }
 
-    private void updateCategoryBreakdown() {
+    // Called from the SwingWorker's done() with real data, or with null when offline
+    private void updateCategoryBreakdown(Map<String, Double> totals) {
         if (categorySummaryPanel == null) return;
         categorySummaryPanel.removeAll();
-        Map<String, Double> totals = compute.getTotalsByCategory(selectedYear, null);
-        if (totals.isEmpty()) {
-            JLabel e = new JLabel("No data for " + selectedYear);
+        if (totals == null || totals.isEmpty()) {
+            JLabel e = new JLabel(totals == null ? "No database connection." : "No data for " + selectedYear);
             e.setFont(sf(Font.PLAIN, 13f));
             e.setForeground(LABEL_3);
             categorySummaryPanel.add(e);
@@ -1025,6 +1028,19 @@ public void updateCharts() {
     chartLeftPanel.revalidate();  chartLeftPanel.repaint();
     chartRightPanel.revalidate(); chartRightPanel.repaint();
 
+    // Reset stat cards so stale values never linger when DB is offline
+    currentMonthSpendingLabel.setText("—");
+    averageExpensesLabel.setText("—");
+    yearlyTotalLabel.setText("—");
+    monthChangeLabel.setText("—");
+    monthChangeLabel.setForeground(LABEL_2);
+    if (monthChangeIconLabel != null) {
+        monthChangeIconLabel.setText("—");
+        monthChangeIconLabel.setForeground(LABEL_2);
+        monthChangeAccent = LABEL_2;
+        monthChangeIconCircle.repaint();
+    }
+
     // Snapshot values so the worker always uses a consistent view
     final int year  = selectedYear;
     final int month = selectedMonth;
@@ -1076,6 +1092,7 @@ public void updateCharts() {
 
             if (!dbOk) {
                 showNoDbPlaceholder();
+                updateCategoryBreakdown(null);   // clears stale chips when offline
             } else {
                 currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
                 averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
@@ -1105,7 +1122,7 @@ public void updateCharts() {
                 chartLeftPanel.add(lf, BorderLayout.CENTER);
                 chartRightPanel.add(rf, BorderLayout.CENTER);
 
-                updateCategoryBreakdown();
+                updateCategoryBreakdown(catTotals);  // pass pre-fetched data, no extra DB call
             }
 
             chartLeftPanel.revalidate();  chartLeftPanel.repaint();
