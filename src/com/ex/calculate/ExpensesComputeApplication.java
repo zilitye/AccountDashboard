@@ -2,6 +2,7 @@ package com.ex.calculate;
 
 import chart.ChartFrame;
 import chart.ChartPie;
+import chart.SQLConnection;
 import chart.ChartBar;
 import chart.ChartLine;
 
@@ -14,6 +15,8 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -1012,81 +1015,115 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
     // ════════════════════════════════════════════════════════════════════════
     // UPDATE CHARTS
     // ════════════════════════════════════════════════════════════════════════
-    private void updateCharts() {
-        chartLeftPanel.removeAll();
-        chartRightPanel.removeAll();
-        try {
-            double monthlyTotal = compute.getMonthlyTotal(selectedYear, selectedMonth);
-            double avgMonthly   = compute.getAverageMonthlyExpenses(selectedYear);
-            double yearlyTotal  = compute.getYearlyTotal(selectedYear);
-            double monthChange  = compute.getMonthComparison(selectedYear, selectedMonth-1, selectedMonth);
+public void updateCharts() {
+    // Immediately clear panels and show a spinner — no DB call yet, so no freeze
+    chartLeftPanel.removeAll();
+    chartRightPanel.removeAll();
+    JLabel loading = new JLabel("Loading…");
+    loading.setForeground(LABEL_3);
+    loading.setFont(sf(Font.PLAIN, 12f));
+    loading.setHorizontalAlignment(JLabel.CENTER);
+    chartLeftPanel.add(loading, BorderLayout.CENTER);
+    chartLeftPanel.revalidate();  chartLeftPanel.repaint();
+    chartRightPanel.revalidate(); chartRightPanel.repaint();
 
-            currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
-            averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
-            yearlyTotalLabel.setText(String.format("RM %.2f", yearlyTotal));
-            monthChangeLabel.setText(monthChange != 0 
-                    ? String.format("%+.1f%%", monthChange) 
-                    : "—");
+    // Snapshot values so the worker always uses a consistent view
+    final int year  = selectedYear;
+    final int month = selectedMonth;
+    final int mode  = currentViewMode;
 
-            if (monthChange < 0) {
-                monthChangeLabel.setForeground(RED);
+    new SwingWorker<Void, Void>() {
 
-                monthChangeIconLabel.setText("↓");
-                monthChangeIconLabel.setForeground(RED);
+        // Results computed off the EDT
+        private boolean      dbOk       = false;
+        private double       monthlyTotal, avgMonthly, yearlyTotal, monthChange;
+        private JFreeChart   leftChart, rightChart;
+        private Map<String, Double> catTotals;
 
-                monthChangeAccent = RED;
+        @Override
+        protected Void doInBackground() {
+            // ALL blocking DB/network work happens here — EDT stays free
+            try {
+                Connection conn = SQLConnection.getInstance().getConnection();
+                if (conn == null || conn.isClosed()) return null;
 
-            } else if (monthChange > 0) {
-                monthChangeLabel.setForeground(GREEN);
+                monthlyTotal = compute.getMonthlyTotal(year, month);
+                avgMonthly   = compute.getAverageMonthlyExpenses(year);
+                yearlyTotal  = compute.getYearlyTotal(year);
+                monthChange  = compute.getMonthComparison(year, month - 1, month);
+                catTotals    = compute.getTotalsByCategory(year, null);
 
-                monthChangeIconLabel.setText("↑");
-                monthChangeIconLabel.setForeground(GREEN);
-
-                monthChangeAccent = GREEN;
-
-            } else {
-                monthChangeLabel.setForeground(LABEL_2);
-
-                monthChangeIconLabel.setText("—");
-                monthChangeIconLabel.setForeground(LABEL_2);
-
-                monthChangeAccent = LABEL_2;
+                if (mode == 1) {
+                    Map<Integer, Double> trend   = compute.getMonthlyTotals(year);
+                    Map<String, Double>  monthly = compute.getTotalsByCategory(year, month);
+                    leftChart  = theme(ChartPie.createMonthlyPieChart(monthly, year, month));
+                    rightChart = theme(ChartLine.createMonthlyTrendChart(trend, year));
+                } else {
+                    Map<String, Double> yearly = compute.getTotalsByCategory(year, null);
+                    leftChart  = theme(ChartPie.createYearlyPieChart(yearly, year));
+                    rightChart = theme(ChartBar.createCategoryBarChart(yearly, "Yearly Overview", "Category", "Amount (RM)"));
+                }
+                dbOk = true;
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-
-            // 🔥 IMPORTANT: repaint the circle
-            monthChangeIconCircle.repaint();
-
-            if (currentViewMode == 1) {
-                Map<Integer, Double> trend   = compute.getMonthlyTotals(selectedYear);
-                Map<String, Double>  monthly = compute.getTotalsByCategory(selectedYear, selectedMonth);
-                ChartFrame lf = new ChartFrame(theme(ChartLine.createMonthlyTrendChart(trend, selectedYear)));
-                lf.setPreferredSize(new Dimension(400, 320));
-                ChartFrame pf = new ChartFrame(theme(ChartPie.createMonthlyPieChart(monthly, selectedYear, selectedMonth)));
-                pf.setPreferredSize(new Dimension(340, 320));
-                chartLeftPanel.add(pf, BorderLayout.CENTER);
-                chartRightPanel.add(lf, BorderLayout.CENTER);
-            } else {
-                Map<String, Double> yearly = compute.getTotalsByCategory(selectedYear, null);
-                ChartFrame bf = new ChartFrame(theme(ChartBar.createCategoryBarChart(yearly, "Yearly Overview", "Category", "Amount (RM)")));
-                bf.setPreferredSize(new Dimension(400, 320));
-                ChartFrame pf = new ChartFrame(theme(ChartPie.createYearlyPieChart(yearly, selectedYear)));
-                pf.setPreferredSize(new Dimension(340, 320));
-                chartLeftPanel.add(pf, BorderLayout.CENTER);
-                chartRightPanel.add(bf, BorderLayout.CENTER);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JLabel err = new JLabel("Database connection required.");
-            err.setForeground(LABEL_3);
-            err.setFont(sf(Font.PLAIN, 12f));
-            err.setHorizontalAlignment(JLabel.CENTER);
-            chartLeftPanel.add(err, BorderLayout.CENTER);
+            return null;
         }
-        chartLeftPanel.revalidate();  chartLeftPanel.repaint();
-        chartRightPanel.revalidate(); chartRightPanel.repaint();
-        updateCategoryBreakdown();
-    }
 
+        @Override
+        protected void done() {
+            // Back on the EDT — safe to update Swing components
+            chartLeftPanel.removeAll();
+            chartRightPanel.removeAll();
+
+            if (!dbOk) {
+                showNoDbPlaceholder();
+            } else {
+                currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
+                averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
+                yearlyTotalLabel.setText(String.format("RM %.2f", yearlyTotal));
+                monthChangeLabel.setText(monthChange != 0
+                        ? String.format("%+.1f%%", monthChange) : "—");
+
+                if (monthChange < 0) {
+                    monthChangeLabel.setForeground(RED);
+                    monthChangeIconLabel.setText("↓"); monthChangeIconLabel.setForeground(RED);
+                    monthChangeAccent = RED;
+                } else if (monthChange > 0) {
+                    monthChangeLabel.setForeground(GREEN);
+                    monthChangeIconLabel.setText("↑"); monthChangeIconLabel.setForeground(GREEN);
+                    monthChangeAccent = GREEN;
+                } else {
+                    monthChangeLabel.setForeground(LABEL_2);
+                    monthChangeIconLabel.setText("—"); monthChangeIconLabel.setForeground(LABEL_2);
+                    monthChangeAccent = LABEL_2;
+                }
+                monthChangeIconCircle.repaint();
+
+                ChartFrame lf = new ChartFrame(leftChart);
+                lf.setPreferredSize(new Dimension(340, 320));
+                ChartFrame rf = new ChartFrame(rightChart);
+                rf.setPreferredSize(new Dimension(400, 320));
+                chartLeftPanel.add(lf, BorderLayout.CENTER);
+                chartRightPanel.add(rf, BorderLayout.CENTER);
+
+                updateCategoryBreakdown();
+            }
+
+            chartLeftPanel.revalidate();  chartLeftPanel.repaint();
+            chartRightPanel.revalidate(); chartRightPanel.repaint();
+        }
+    }.execute();
+}
+
+// ── Extracted helper ───────────────────────────────────────────────────────
+private void showNoDbPlaceholder() {
+    JLabel err = new JLabel("Database connection required.");
+    err.setForeground(LABEL_3);
+    err.setFont(sf(Font.PLAIN, 12f));
+    err.setHorizontalAlignment(JLabel.CENTER);
+    chartLeftPanel.add(err, BorderLayout.CENTER);
+}
     private JFreeChart theme(JFreeChart chart) {
         chart.setBackgroundPaint(CARD_BG);
         chart.getPlot().setBackgroundPaint(CARD_BG);

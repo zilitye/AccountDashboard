@@ -296,7 +296,7 @@ public class SettingsPage extends JPanel {
         worker.execute();
     }
 
-    private void saveAndApply() {
+private void saveAndApply() {
         String url  = urlField.getText().trim();
         String user = userField.getText().trim();
         String pass = new String(passField.getPassword());
@@ -307,7 +307,7 @@ public class SettingsPage extends JPanel {
             return;
         }
 
-        // Persist to file
+        // 1. Persist to file
         Properties props = new Properties();
         props.setProperty("db.url",      url);
         props.setProperty("db.user",     user);
@@ -321,39 +321,46 @@ public class SettingsPage extends JPanel {
             return;
         }
 
-        // Re-initialise SQLConnection via reflection so we don't expose the field
-        try {
-            java.lang.reflect.Field instField = SQLConnection.class.getDeclaredField("instance");
-            instField.setAccessible(true);
-            SQLConnection old = (SQLConnection) instField.get(null);
-            // Close old connection if accessible
-            try {
-                java.lang.reflect.Field connField = SQLConnection.class.getDeclaredField("connection");
-                connField.setAccessible(true);
-                java.sql.Connection oldConn = (java.sql.Connection) connField.get(old);
-                if (oldConn != null && !oldConn.isClosed()) oldConn.close();
-
-                // Update url/user/password fields
-                java.lang.reflect.Field urlF  = SQLConnection.class.getDeclaredField("url");
-                java.lang.reflect.Field userF = SQLConnection.class.getDeclaredField("user");
-                java.lang.reflect.Field passF = SQLConnection.class.getDeclaredField("password");
-                urlF.setAccessible(true);  userF.setAccessible(true);  passF.setAccessible(true);
-                urlF.set(old, url);
-                userF.set(old, user);
-                passF.set(old, pass);
-            } catch (Exception ignored) {}
-
-            instField.set(null, null);     // force re-init on next getInstance()
-        } catch (Exception e) {
-            // Fallback: not critical — settings are saved, user can restart
-        }
+        // 🔥 2. DROP THE OLD CONNECTION (Replaces your old complicated reflection code)
+        SQLConnection.getInstance().resetConnection(); // Closes the active connection
+        SQLConnection.reset();                         // Sets the Singleton instance to null
 
         setStatus(GREEN, "Settings saved. Reconnecting…");
-        // Trigger a reconnect
-        SwingUtilities.invokeLater(() -> {
-            try { SQLConnection.getInstance().getConnection(); setStatus(GREEN, "Connected ✓"); }
-            catch (Exception e) { setStatus(RED, "Reconnect failed — " + shorten(e.getMessage(), 70)); }
-        });
+        
+// 1 & 2. (Keep your existing code for saving the file and resetting the connection)
+        
+        setStatus(GREEN, "Settings saved. Reconnecting…");
+
+        // 🔥 3. START A BACKGROUND THREAD 
+        // This stops the UI from freezing while it tries to connect!
+        new Thread(() -> {
+            try {
+                // Try to connect in the background (this might take a few seconds)
+                Connection conn = SQLConnection.getInstance().getConnection();
+                
+                // 🔥 4. UPDATE THE UI
+                // Once it finishes, tell the UI thread to update the labels and charts
+                SwingUtilities.invokeLater(() -> {
+                    if (conn != null) {
+                        setStatus(GREEN, "Connected ✓");
+                        
+                        // Force the dashboard to refresh
+                        Window parentWindow = SwingUtilities.getWindowAncestor(SettingsPage.this);
+                        if (parentWindow instanceof ExpensesComputeApplication) {
+                            ((ExpensesComputeApplication) parentWindow).updateCharts(); 
+                        }
+                    } else {
+                        setStatus(RED, "Reconnect failed — Offline");
+                    }
+                });
+                
+            } catch (Exception e) {
+                // If it fails, update the text to show the error
+                SwingUtilities.invokeLater(() -> {
+                    setStatus(RED, "Reconnect failed — " + shorten(e.getMessage(), 70));
+                });
+            }
+        }).start(); // Don't forget the .start()!
     }
 
     private void resetDefaults() {

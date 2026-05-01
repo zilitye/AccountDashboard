@@ -207,28 +207,61 @@ for (int i = 0; i < table.getColumnCount(); i++) {
     // DATA OPERATIONS
     // ════════════════════════════════════════════════════════════════════════
     public void loadData() {
+        // Clear and show status immediately — no DB call on EDT
         tableModel.setRowCount(0);
-        try (Connection conn = SQLConnection.getInstance().getConnection()) {
-            String sql = "SELECT id, year, month, category, amount FROM expenses ORDER BY year DESC, month DESC, id DESC";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            int count = 0;
-            while (rs.next()) {
-                tableModel.addRow(new Object[]{
-                    rs.getInt("id"),
-                    rs.getInt("year"),
-                    rs.getInt("month"),
-                    rs.getString("category"),
-                    rs.getDouble("amount")
-                });
-                count++;
+        rowCountLabel.setText("Loading…");
+        rowCountLabel.setForeground(new Color(0x6E6E73));
+
+        new SwingWorker<java.util.List<Object[]>, Void>() {
+
+            private String statusText  = "";
+            private Color  statusColor = new Color(0x6E6E73);
+
+            @Override
+            protected java.util.List<Object[]> doInBackground() {
+                java.util.List<Object[]> rows = new java.util.ArrayList<>();
+                Connection conn = SQLConnection.getInstance().getConnection();
+                if (conn == null) {
+                    statusText  = "⚠  Database offline — Check Settings";
+                    statusColor = RED;
+                    return rows;
+                }
+                String sql = "SELECT id, year, month, category, amount FROM expenses ORDER BY year DESC, month DESC, id DESC";
+                try (PreparedStatement ps = conn.prepareStatement(sql);
+                     ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        rows.add(new Object[]{
+                            rs.getInt("id"),
+                            rs.getInt("year"),
+                            rs.getInt("month"),
+                            rs.getString("category"),
+                            rs.getDouble("amount")
+                        });
+                    }
+                    int n = rows.size();
+                    statusText  = n + " record" + (n == 1 ? "" : "s") + " in database";
+                    statusColor = new Color(0x6E6E73);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    statusText  = "⚠  Could not load data — check DB connection";
+                    statusColor = RED;
+                }
+                return rows;
             }
-            rowCountLabel.setText(count + " record" + (count == 1 ? "" : "s") + " in database");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            rowCountLabel.setText("⚠  Could not load data — check DB connection");
-            rowCountLabel.setForeground(RED);
-        }
+
+            @Override
+            protected void done() {
+                try {
+                    java.util.List<Object[]> rows = get();
+                    tableModel.setRowCount(0);
+                    for (Object[] row : rows) tableModel.addRow(row);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                rowCountLabel.setText(statusText);
+                rowCountLabel.setForeground(statusColor);
+            }
+        }.execute();
     }
 
     private void deleteSelectedRow() {
@@ -245,6 +278,11 @@ for (int i = 0; i < table.getColumnCount(); i++) {
         if (confirm != JOptionPane.YES_OPTION) return;
 
         try (Connection conn = SQLConnection.getInstance().getConnection()) {
+            if (conn == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Cannot delete: Database is currently offline.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             PreparedStatement ps = conn.prepareStatement("DELETE FROM expenses WHERE id=?");
             ps.setInt(1, id);
             ps.executeUpdate();
