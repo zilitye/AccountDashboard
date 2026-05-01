@@ -29,16 +29,10 @@ Run demo with `java -jar AccountDashboard-<version>.jar` (or double‑click it).
 ## Sequence Diagram
 ![demo2](sequenceDiagram.png)
 
-## Submission
-Submission Material in ONE zipped folder, which label with your MATRIX No.: 
-1. Sequence diagram 
-2. Program codes & execution files (*.jar) – zipped project folder 
-3. Export MySQL Database Schema (structure & data) 
-4. Screenshot of graphs 
-
 ## References
 1. Singleton Design Pattern, Retrieved from 
 https://sourcemaking.com/design_patterns/singleton, March 2015 
-2. JFreeChart1.5.6, Retrieved from http://www.jfree.org/jfreechart/ 
+2. JFreeChart1.5.6, Retrieved from http://www.jfree.org/jfreechart/
 3. XChart, Retrieved from https://knowm.org/open-source/xchart/
+4. Flatlaf, Retrieved from https://github.com/JFormDesigner/FlatLaf
 
