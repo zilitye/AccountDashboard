@@ -555,7 +555,14 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
                     for (Component c2 : inner.getComponents()) {
                         if (c2 instanceof JLabel) {
                             JLabel lbl = (JLabel) c2;
-                            lbl.setForeground(active ? Color.WHITE : (lbl.getText().length() <= 2 ? LABEL_2 : LABEL));
+                            boolean isIcon = lbl.getText().length() <= 2;
+
+                            lbl.setForeground(active
+                                ? Color.WHITE
+                                : (isIcon ? LABEL_2 : LABEL));
+
+                            // 🔥 ADD THIS LINE
+                            lbl.setFont(UIManager.getFont(active ? "h3.font" : "h3.regular.font"));
                         }
                     }
                 }
