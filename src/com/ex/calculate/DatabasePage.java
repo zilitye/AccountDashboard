@@ -162,7 +162,13 @@ public class DatabasePage extends JPanel {
                 return this;
             }
         };
-        table.getColumnModel().getColumn(4).setCellRenderer(rightAlign);
+        DefaultTableCellRenderer leftAlign = new DefaultTableCellRenderer();
+leftAlign.setHorizontalAlignment(JLabel.LEFT);
+
+// Apply to ALL columns
+for (int i = 0; i < table.getColumnCount(); i++) {
+    table.getColumnModel().getColumn(i).setCellRenderer(leftAlign);
+}
 
         // Header styling
         JTableHeader th = table.getTableHeader();
@@ -194,6 +200,7 @@ public class DatabasePage extends JPanel {
 
         card.add(sp, BorderLayout.CENTER);
         return card;
+        
     }
 
     // ════════════════════════════════════════════════════════════════════════
