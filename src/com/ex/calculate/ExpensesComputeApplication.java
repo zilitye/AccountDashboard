@@ -612,7 +612,7 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         appName.setForeground(LABEL);
         appName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel version = new JLabel("Version 1.0.0");
+        JLabel version = new JLabel("Version 1.1.0");
         version.setFont(sf(Font.PLAIN, 12f));
         version.setForeground(LABEL_2);
         version.setAlignmentX(Component.CENTER_ALIGNMENT);
