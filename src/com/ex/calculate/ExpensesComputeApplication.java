@@ -615,7 +615,7 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         appName.setForeground(LABEL);
         appName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel version = new JLabel("Version 1.1.0");
+        JLabel version = new JLabel("Version 1.2.0");
         version.setFont(sf(Font.PLAIN, 12f));
         version.setForeground(LABEL_2);
         version.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -644,8 +644,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         closeBtn.setMaximumSize(new Dimension(80, 30));
         closeBtn.addActionListener(e -> dlg.dispose());
 
-        root.add(iconCircle);
-        root.add(Box.createVerticalStrut(12));
         root.add(appName);
         root.add(Box.createVerticalStrut(4));
         root.add(version);
