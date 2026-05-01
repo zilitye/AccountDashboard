@@ -17,7 +17,7 @@ public class SQLConnection {
     private String password;
 
     private SQLConnection() {
-        loadFromFile();   // 🔥 load latest saved settings
+        loadFromFile();   // load latest saved settings
         connect();
     }
 
@@ -30,12 +30,12 @@ public class SQLConnection {
         this.user = props.getProperty("db.user");
         this.password = props.getProperty("db.password");
 
-        System.out.println("Using DB URL: " + url); // 🔥 debug
+        System.out.println("Using DB URL: " + url); // debug
 
     } catch (Exception e) {
         System.out.println("⚠ Using default DB settings");
 
-        // fallback (optional)
+        //default setting
         this.url = "jdbc:oracle:thin:@localhost:1521:xe";
         this.user = "system";
         this.password = "password";
