@@ -594,7 +594,7 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         root.setBorder(BorderFactory.createEmptyBorder(32, 36, 28, 36));
 
         // App icon placeholder
-        JPanel iconCircle = new JPanel() {
+        /*JPanel iconCircle = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -610,14 +610,14 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
             @Override public Dimension getPreferredSize() { return new Dimension(56,56); }
         };
         iconCircle.setOpaque(false);
-        iconCircle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        iconCircle.setAlignmentX(Component.CENTER_ALIGNMENT);*/
 
         JLabel appName = new JLabel("Account Dashboard");
         appName.setFont(sf(Font.BOLD, 17f));
         appName.setForeground(LABEL);
         appName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel version = new JLabel("Version 1.2.0");
+        JLabel version = new JLabel("Version 1.2.1");
         version.setFont(sf(Font.PLAIN, 12f));
         version.setForeground(LABEL_2);
         version.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -646,8 +646,8 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         closeBtn.setMaximumSize(new Dimension(80, 30));
         closeBtn.addActionListener(e -> dlg.dispose());
 
-        root.add(iconCircle);
-        root.add(Box.createVerticalStrut(12));
+        //root.add(iconCircle);
+        //root.add(Box.createVerticalStrut(12));
         root.add(appName);
         root.add(Box.createVerticalStrut(4));
         root.add(version);
@@ -818,7 +818,7 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         statsRow.setOpaque(false);
         statsRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 96));
         statsRow.add(buildStatCard("Yearly Total",  yearlyTotalLabelRef(),          ACCENT,  "◈"));
-        statsRow.add(buildStatCard("vs Last Month", monthChangeLabelRef(),           GREEN,  "↑"));
+        statsRow.add(buildStatCard("vs Last Month", monthChangeLabelRef(),           RED,  "↑"));
         statsRow.add(buildStatCard("Avg / Month",   averageExpensesLabelRef(),       INDIGO, "⌀"));
         statsRow.add(buildStatCard("This Month",    currentMonthSpendingLabelRef(),  ORANGE, "●"));
         inner.add(statsRow);
@@ -1098,13 +1098,13 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
                             ? String.format("%+.1f%%", monthChange) : "—");
 
                     if (monthChange < 0) {
-                        monthChangeLabel.setForeground(RED);
-                        monthChangeIconLabel.setText("↓"); monthChangeIconLabel.setForeground(RED);
-                        monthChangeAccent = RED;
-                    } else if (monthChange > 0) {
                         monthChangeLabel.setForeground(GREEN);
-                        monthChangeIconLabel.setText("↑"); monthChangeIconLabel.setForeground(GREEN);
+                        monthChangeIconLabel.setText("↓"); monthChangeIconLabel.setForeground(GREEN);
                         monthChangeAccent = GREEN;
+                    } else if (monthChange > 0) {
+                        monthChangeLabel.setForeground(RED);
+                        monthChangeIconLabel.setText("↑"); monthChangeIconLabel.setForeground(RED);
+                        monthChangeAccent = RED;
                     } else {
                         monthChangeLabel.setForeground(LABEL_2);
                         monthChangeIconLabel.setText("—"); monthChangeIconLabel.setForeground(LABEL_2);
