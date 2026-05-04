@@ -127,7 +127,8 @@ public class SettingsPage extends JPanel {
         // ── JDBC URL ─────────────────────────────────────────────────────────
         card.add(fieldLabel("JDBC URL"));
         card.add(Box.createVerticalStrut(6));
-        urlField = styledField("jdbc:oracle:thin:@localhost:1521:xe");
+        //urlField = styledField("jdbc:oracle:thin:@localhost:1521:xe");
+        urlField = styledField("jdbc:mysql://localhost:3306/accountdb");
         card.add(urlField);
 
         card.add(Box.createVerticalStrut(4));
@@ -141,7 +142,8 @@ public class SettingsPage extends JPanel {
         // ── Username ─────────────────────────────────────────────────────────
         card.add(fieldLabel("Username"));
         card.add(Box.createVerticalStrut(6));
-        userField = styledField("system");
+        //userField = styledField("system");
+        userField = styledField("root");
         card.add(userField);
         card.add(Box.createVerticalStrut(16));
 
@@ -368,9 +370,12 @@ private void saveAndApply() {
             "Reset to default Oracle XE settings?",
             "Reset", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) return;
-        urlField.setText("jdbc:oracle:thin:@LAPTOP-0DI29GMV:1521:xe");
+        /*urlField.setText("jdbc:oracle:thin:@LAPTOP-0DI29GMV:1521:xe");
         userField.setText("system");
-        passField.setText("password");
+        passField.setText("password");*/
+        urlField.setText("jdbc:mysql://localhost:3306/accountdb");
+        userField.setText("root");
+        passField.setText("");
         setStatus(LABEL_3, "Reset to defaults — not saved");
     }
 
@@ -381,9 +386,12 @@ private void saveAndApply() {
         File f = new File(PROPS_FILE);
         if (!f.exists()) {
             // Populate with SQLConnection's compiled-in defaults
-            urlField.setText("jdbc:oracle:thin:@LAPTOP-0DI29GMV:1521:xe");
+            /*urlField.setText("jdbc:oracle:thin:@LAPTOP-0DI29GMV:1521:xe");
             userField.setText("system");
-            passField.setText("password");
+            passField.setText("password");*/
+            urlField.setText("jdbc:mysql://localhost:3306/accountdb");
+            userField.setText("root");
+            passField.setText("");
             return;
         }
         Properties props = new Properties();
