@@ -12,12 +12,12 @@ import java.sql.DriverManager;
 import java.util.Properties;
 
 /**
- * SettingsPage — lets the user edit the Oracle DB connection credentials.
+ * SettingsPage — lets the user edit the DB connection credentials.
  *
- * Credentials are persisted to  db.properties  next to the JAR so they
- * survive restarts.  SQLConnection is re-initialised after a successful save.
+ * Credentials are persisted to db.properties next to the JAR so they
+ * survive restarts. SQLConnection is re-initialised after a successful save.
  *
- * Styled to match the macOS Sonoma design language of the main app.
+ * Supports both MySQL and Oracle JDBC connections.
  */
 public class SettingsPage extends JPanel {
 
@@ -36,6 +36,11 @@ public class SettingsPage extends JPanel {
     private static final int   R         = 10;
 
     private static final String PROPS_FILE = "db.properties";
+
+    // ── Default connection values ────────────────────────────────────────────
+    private static final String DEFAULT_URL  = "jdbc:mysql://localhost:3306/accountdb";
+    private static final String DEFAULT_USER = "root";
+    private static final String DEFAULT_PASS = "";
 
     private static Font sf(int style, float size) {
         for (String n : new String[]{".SF NS Display", ".SF NS Text", "Helvetica Neue", "Helvetica", "SansSerif"}) {
@@ -57,8 +62,8 @@ public class SettingsPage extends JPanel {
         setLayout(new BorderLayout());
         setBackground(BG);
         setBorder(BorderFactory.createEmptyBorder(22, 22, 22, 22));
-        add(buildHeader(),  BorderLayout.NORTH);
-        add(buildForm(),    BorderLayout.CENTER);
+        add(buildHeader(), BorderLayout.NORTH);
+        add(buildForm(),   BorderLayout.CENTER);
         loadSavedSettings();
     }
 
@@ -94,7 +99,6 @@ public class SettingsPage extends JPanel {
     // FORM CARD
     // ════════════════════════════════════════════════════════════════════════
     private JPanel buildForm() {
-        // Outer wrapper so the card doesn't stretch full-height
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
 
@@ -127,12 +131,11 @@ public class SettingsPage extends JPanel {
         // ── JDBC URL ─────────────────────────────────────────────────────────
         card.add(fieldLabel("JDBC URL"));
         card.add(Box.createVerticalStrut(6));
-        //urlField = styledField("jdbc:oracle:thin:@localhost:1521:xe");
-        urlField = styledField("jdbc:mysql://localhost:3306/accountdb");
+        urlField = styledField(DEFAULT_URL);
         card.add(urlField);
 
         card.add(Box.createVerticalStrut(4));
-        JLabel urlHint = new JLabel("  Example: jdbc:oracle:thin:@HOST:PORT:SID  or  @//HOST:PORT/SERVICE");
+        JLabel urlHint = new JLabel("  MySQL: jdbc:mysql://HOST:PORT/DB  |  Oracle: jdbc:oracle:thin:@HOST:PORT:SID");
         urlHint.setFont(sf(Font.PLAIN, 11f));
         urlHint.setForeground(LABEL_3);
         urlHint.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -142,8 +145,7 @@ public class SettingsPage extends JPanel {
         // ── Username ─────────────────────────────────────────────────────────
         card.add(fieldLabel("Username"));
         card.add(Box.createVerticalStrut(6));
-        //userField = styledField("system");
-        userField = styledField("root");
+        userField = styledField(DEFAULT_USER);
         card.add(userField);
         card.add(Box.createVerticalStrut(16));
 
@@ -196,13 +198,12 @@ public class SettingsPage extends JPanel {
         btnRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
 
-        JButton testBtn = buildBtn("Test Connection", new Color(0xE5E5EA), LABEL);
-        testBtn.addActionListener(e -> testConnection());
-
-        JButton saveBtn = buildBtn("Save & Apply", ACCENT, Color.WHITE);
-        saveBtn.addActionListener(e -> saveAndApply());
-
+        JButton testBtn  = buildBtn("Test Connection",  new Color(0xE5E5EA), LABEL);
+        JButton saveBtn  = buildBtn("Save & Apply",     ACCENT,              Color.WHITE);
         JButton resetBtn = buildBtn("Reset to Default", new Color(0xFFE5E4), RED);
+
+        testBtn.addActionListener(e  -> testConnection());
+        saveBtn.addActionListener(e  -> saveAndApply());
         resetBtn.addActionListener(e -> resetDefaults());
 
         btnRow.add(testBtn);
@@ -216,9 +217,6 @@ public class SettingsPage extends JPanel {
         card.add(Box.createVerticalStrut(18));
         card.add(buildInfoBox());
 
-        // Limit card width for readability
-        JPanel cardWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        cardWrapper.setOpaque(false);
         card.setMaximumSize(new Dimension(680, Integer.MAX_VALUE));
         card.setPreferredSize(new Dimension(620, 500));
 
@@ -249,7 +247,7 @@ public class SettingsPage extends JPanel {
         JLabel text = new JLabel("<html>"
             + "<b>Tip:</b> Settings are saved to <tt>db.properties</tt> beside the application JAR. "
             + "The application will reconnect automatically after saving. "
-            + "Make sure your Oracle JDBC driver is on the classpath."
+            + "Make sure your JDBC driver (MySQL or Oracle) is on the classpath."
             + "</html>");
         text.setFont(sf(Font.PLAIN, 11.5f));
         text.setForeground(LABEL_2);
@@ -262,19 +260,31 @@ public class SettingsPage extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     // ACTIONS
     // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Tests the connection using the credentials currently in the form fields,
+     * without saving anything. Detects the correct JDBC driver from the URL.
+     */
     private void testConnection() {
         String url  = urlField.getText().trim();
         String user = userField.getText().trim();
         String pass = new String(passField.getPassword());
 
+        if (url.isEmpty() || user.isEmpty()) {
+            setStatus(ORANGE, "URL and Username cannot be empty");
+            return;
+        }
+
         setStatus(ORANGE, "Testing…");
 
-        // Run in background so we don't freeze the UI
         SwingWorker<Boolean, Void> worker = new SwingWorker<>() {
             String errorMsg = "";
-            @Override protected Boolean doInBackground() {
+
+            @Override
+            protected Boolean doInBackground() {
                 try {
-                    Class.forName("oracle.jdbc.OracleDriver");
+                    loadDriver(url);
+                    DriverManager.setLoginTimeout(5);
                     Connection c = DriverManager.getConnection(url, user, pass);
                     c.close();
                     return true;
@@ -283,7 +293,9 @@ public class SettingsPage extends JPanel {
                     return false;
                 }
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     if (get()) {
                         setStatus(GREEN, "Connection successful ✓");
@@ -298,7 +310,11 @@ public class SettingsPage extends JPanel {
         worker.execute();
     }
 
-private void saveAndApply() {
+    /**
+     * Validates inputs, saves credentials to db.properties, resets the
+     * SQLConnection singleton, and reconnects in a background thread.
+     */
+    private void saveAndApply() {
         String url  = urlField.getText().trim();
         String user = userField.getText().trim();
         String pass = new String(passField.getPassword());
@@ -309,7 +325,7 @@ private void saveAndApply() {
             return;
         }
 
-        // 1. Persist to file
+        // 1. Persist credentials to file
         Properties props = new Properties();
         props.setProperty("db.url",      url);
         props.setProperty("db.user",     user);
@@ -323,83 +339,77 @@ private void saveAndApply() {
             return;
         }
 
-        // 🔥 2. DROP THE OLD CONNECTION (Replaces your old complicated reflection code)
-        SQLConnection.getInstance().resetConnection(); // Closes the active connection
-        SQLConnection.reset();                         // Sets the Singleton instance to null
+        // 2. Reset the singleton so the next call creates a fresh connection
+        SQLConnection.reset();
 
-        setStatus(GREEN, "Settings saved. Reconnecting…");
-        
-// 1 & 2. (Keep your existing code for saving the file and resetting the connection)
-        
-        setStatus(GREEN, "Settings saved. Reconnecting…");
+        setStatus(ORANGE, "Settings saved. Reconnecting…");
 
-        // 🔥 3. START A BACKGROUND THREAD 
-        // This stops the UI from freezing while it tries to connect!
+        // 3. Reconnect in background so the UI doesn't freeze
         new Thread(() -> {
             try {
-                // Try to connect in the background (this might take a few seconds)
                 Connection conn = SQLConnection.getInstance().getConnection();
-                
-                // 🔥 4. UPDATE THE UI
-                // Once it finishes, tell the UI thread to update the labels and charts
+
                 SwingUtilities.invokeLater(() -> {
                     if (conn != null) {
                         setStatus(GREEN, "Connected ✓");
-                        
-                        // Force the dashboard to refresh
+
+                        // Notify the parent window to refresh its charts/data
                         Window parentWindow = SwingUtilities.getWindowAncestor(SettingsPage.this);
                         if (parentWindow instanceof ExpensesComputeApplication) {
-                            ((ExpensesComputeApplication) parentWindow).updateCharts(); 
+                            ((ExpensesComputeApplication) parentWindow).updateCharts();
                         }
                     } else {
-                        setStatus(RED, "Reconnect failed — Offline");
+                        setStatus(RED, "Reconnect failed — connection returned null");
                     }
                 });
-                
+
             } catch (Exception e) {
-                // If it fails, update the text to show the error
-                SwingUtilities.invokeLater(() -> {
-                    setStatus(RED, "Reconnect failed — " + shorten(e.getMessage(), 70));
-                });
+                SwingUtilities.invokeLater(() ->
+                    setStatus(RED, "Reconnect failed — " + shorten(e.getMessage(), 70))
+                );
             }
-        }).start(); // Don't forget the .start()!
+        }, "db-reconnect-thread").start();
     }
 
+    /**
+     * Resets all form fields back to the compiled-in MySQL defaults.
+     * Does NOT save or reconnect — user must click "Save & Apply" afterwards.
+     */
     private void resetDefaults() {
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Reset to default Oracle XE settings?",
+            "Reset to default MySQL settings?",
             "Reset", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) return;
-        /*urlField.setText("jdbc:oracle:thin:@LAPTOP-0DI29GMV:1521:xe");
-        userField.setText("system");
-        passField.setText("password");*/
-        urlField.setText("jdbc:mysql://localhost:3306/accountdb");
-        userField.setText("root");
-        passField.setText("");
+
+        urlField.setText(DEFAULT_URL);
+        userField.setText(DEFAULT_USER);
+        passField.setText(DEFAULT_PASS);
         setStatus(LABEL_3, "Reset to defaults — not saved");
     }
 
     // ════════════════════════════════════════════════════════════════════════
     // PERSISTENCE
     // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Reads db.properties and pre-fills the form fields on startup.
+     * Falls back to compiled-in defaults if the file doesn't exist.
+     */
     private void loadSavedSettings() {
         File f = new File(PROPS_FILE);
         if (!f.exists()) {
-            // Populate with SQLConnection's compiled-in defaults
-            /*urlField.setText("jdbc:oracle:thin:@LAPTOP-0DI29GMV:1521:xe");
-            userField.setText("system");
-            passField.setText("password");*/
-            urlField.setText("jdbc:mysql://localhost:3306/accountdb");
-            userField.setText("root");
-            passField.setText("");
+            urlField.setText(DEFAULT_URL);
+            userField.setText(DEFAULT_USER);
+            passField.setText(DEFAULT_PASS);
             return;
         }
+
         Properties props = new Properties();
         try (FileInputStream fis = new FileInputStream(f)) {
             props.load(fis);
-            urlField.setText(props.getProperty("db.url",      ""));
-            userField.setText(props.getProperty("db.user",    ""));
-            passField.setText(props.getProperty("db.password",""));
+            urlField.setText(props.getProperty("db.url",      DEFAULT_URL));
+            userField.setText(props.getProperty("db.user",    DEFAULT_USER));
+            passField.setText(props.getProperty("db.password", DEFAULT_PASS));
             setStatus(ACCENT, "Loaded from db.properties");
         } catch (IOException e) {
             setStatus(ORANGE, "Could not read saved settings");
@@ -409,6 +419,24 @@ private void saveAndApply() {
     // ════════════════════════════════════════════════════════════════════════
     // HELPERS
     // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Loads the correct JDBC driver class based on the URL prefix.
+     * Matches the detection logic in SQLConnection.loadDriver().
+     */
+    private void loadDriver(String url) throws ClassNotFoundException {
+        if (url == null || url.isEmpty()) {
+            throw new ClassNotFoundException("Database URL is empty.");
+        }
+        if (url.startsWith("jdbc:mysql")) {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } else if (url.startsWith("jdbc:oracle")) {
+            Class.forName("oracle.jdbc.OracleDriver");
+        } else {
+            throw new ClassNotFoundException("Unsupported DB type: " + url);
+        }
+    }
+
     private void setStatus(Color dotColor, String message) {
         statusDot.setBackground(dotColor);
         statusDot.repaint();
@@ -487,7 +515,7 @@ private void saveAndApply() {
                 g2.setColor(fg);
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(getText(),
-                    (getWidth() - fm.stringWidth(getText())) / 2,
+                    (getWidth()  - fm.stringWidth(getText())) / 2,
                     (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
@@ -506,17 +534,24 @@ private void saveAndApply() {
         return s.length() > max ? s.substring(0, max) + "…" : s;
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // INNER CLASS — RoundBorder
+    // ════════════════════════════════════════════════════════════════════════
     static class RoundBorder extends AbstractBorder {
         private final Color color;
         private final int   radius;
+
         RoundBorder(Color c, int r) { color = c; radius = r; }
-        @Override public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(color);
             g2.draw(new RoundRectangle2D.Double(x + .5, y + .5, w - 1, h - 1, radius, radius));
             g2.dispose();
         }
+
         @Override public Insets getBorderInsets(Component c)           { return new Insets(1, 1, 1, 1); }
         @Override public Insets getBorderInsets(Component c, Insets i) { i.set(1, 1, 1, 1); return i; }
     }

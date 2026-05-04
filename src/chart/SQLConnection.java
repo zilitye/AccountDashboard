@@ -1,11 +1,11 @@
 package chart;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
-
 
 public class SQLConnection {
 
@@ -16,53 +16,103 @@ public class SQLConnection {
     private String user;
     private String password;
 
+    private static final String CONFIG_FILE = "db.properties";
+
+    // ─────────────────────────────────────────────
+    // Constructor
+    // ─────────────────────────────────────────────
     private SQLConnection() {
-        loadFromFile();   // load latest saved settings
+        loadFromFile();
         connect();
     }
 
+    // ─────────────────────────────────────────────
+    // Load DB config from file
+    // ─────────────────────────────────────────────
     private void loadFromFile() {
-    Properties props = new Properties();
-    try (FileInputStream fis = new FileInputStream("db.properties")) {
-        props.load(fis);
+        Properties props = new Properties();
 
-        this.url = props.getProperty("db.url");
-        this.user = props.getProperty("db.user");
-        this.password = props.getProperty("db.password");
+        try (FileInputStream fis = new FileInputStream(CONFIG_FILE)) {
+            props.load(fis);
 
-        System.out.println("Using DB URL: " + url); // debug
+            this.url = props.getProperty("db.url");
+            this.user = props.getProperty("db.user");
+            this.password = props.getProperty("db.password");
 
-    } catch (Exception e) {
-        System.out.println("⚠ Using default DB settings");
+            System.out.println("Using DB URL: " + url);
 
-        //default setting
-        this.url = "jdbc:oracle:thin:@localhost:1521:xe";
-        this.user = "system";
-        this.password = "password";
-    }
-}
+        } catch (Exception e) {
+            System.out.println("⚠ No config file found. Using default MySQL settings.");
 
-    public static void reset() {
-        instance = null;
+            // Default fallback
+            this.url = "jdbc:mysql://localhost:3306/accountdb";
+            this.user = "root";
+            this.password = "";
+        }
     }
 
-    private void connect() {
-        try {
-            Class.forName("oracle.jdbc.OracleDriver");
-            // Set a short login timeout (5 s) so a failed connection doesn't
-            // block the caller for 20-30 seconds and freeze the UI.
-            DriverManager.setLoginTimeout(5);
-            connection = DriverManager.getConnection(url, user, password);
-            System.out.println("Database connected successfully!");
-        } catch (ClassNotFoundException e) {
-            System.err.println("Oracle JDBC Driver not found.");
-            e.printStackTrace();
-        } catch (SQLException e) {
-            System.err.println("Database connection failed.");
+    // ─────────────────────────────────────────────
+    // Save settings (call this from Settings page)
+    // ─────────────────────────────────────────────
+    public static void saveSettings(String url, String user, String password) {
+        Properties props = new Properties();
+        props.setProperty("db.url", url);
+        props.setProperty("db.user", user);
+        props.setProperty("db.password", password);
+
+        try (FileOutputStream fos = new FileOutputStream(CONFIG_FILE)) {
+            props.store(fos, "Database Configuration");
+            System.out.println("✅ Settings saved.");
+
+            // Force reconnection with new settings
+            reset();
+
+        } catch (Exception e) {
+            System.err.println("❌ Failed to save settings.");
             e.printStackTrace();
         }
     }
 
+    // ─────────────────────────────────────────────
+    // Establish connection
+    // ─────────────────────────────────────────────
+    private void connect() {
+        try {
+            loadDriver();
+
+            DriverManager.setLoginTimeout(5);
+            connection = DriverManager.getConnection(url, user, password);
+
+            System.out.println("✅ Database connected successfully!");
+
+        } catch (Exception e) {
+            System.err.println("❌ Database connection failed.");
+            e.printStackTrace();
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // Load correct driver based on URL
+    // ─────────────────────────────────────────────
+    private void loadDriver() throws ClassNotFoundException {
+        if (url == null) {
+            throw new ClassNotFoundException("Database URL is null.");
+        }
+
+        if (url.startsWith("jdbc:mysql")) {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            System.out.println("Loaded MySQL Driver");
+        } else if (url.startsWith("jdbc:oracle")) {
+            Class.forName("oracle.jdbc.OracleDriver");
+            System.out.println("Loaded Oracle Driver");
+        } else {
+            throw new ClassNotFoundException("Unsupported DB type: " + url);
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // Singleton access
+    // ─────────────────────────────────────────────
     public static SQLConnection getInstance() {
         if (instance == null) {
             instance = new SQLConnection();
@@ -70,16 +120,9 @@ public class SQLConnection {
         return instance;
     }
 
-    public void resetConnection() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        connection = null; // Forces the app to reconnect next time
-    }
+    // ─────────────────────────────────────────────
+    // Get active connection
+    // ─────────────────────────────────────────────
     public Connection getConnection() {
         try {
             if (connection == null || connection.isClosed()) {
@@ -87,11 +130,24 @@ public class SQLConnection {
                 connect();
             }
         } catch (SQLException e) {
-            System.err.println("Error checking connection state.");
             e.printStackTrace();
             connect();
         }
-
         return connection;
+    }
+
+    // ─────────────────────────────────────────────
+    // Reset instance (IMPORTANT for Settings page)
+    // ─────────────────────────────────────────────
+    public static void reset() {
+        if (instance != null && instance.connection != null) {
+            try {
+                instance.connection.close();
+                System.out.println("Old connection closed.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        instance = null;
     }
 }
