@@ -186,7 +186,7 @@ setVisible(true);
         left.setBorder(BorderFactory.createEmptyBorder(0, 14, 0, 0));
 
         // Traffic-light circles
-        JPanel lights = new JPanel(null) {
+        /*JPanel lights = new JPanel(null) {
             @Override public Dimension getPreferredSize() { return new Dimension(52, 50); }
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -203,13 +203,13 @@ setVisible(true);
                 g2.dispose();
             }
         };
-        lights.setOpaque(false);
+        lights.setOpaque(false);*/
 
         JLabel title = new JLabel("Account Dashboard");
         title.setFont(sf(Font.BOLD, 13f));
         title.setForeground(LABEL);
 
-        left.add(lights);
+        //left.add(lights);
         left.add(Box.createHorizontalStrut(10));
         left.add(title);
         bar.add(left, BorderLayout.WEST);

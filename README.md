@@ -29,6 +29,14 @@ Run demo with `java -jar AccountDashboard.jar` (or double‑click it). Requires 
 ## Sequence Diagram
 ![demo2](sequenceDiagram.png)
 
+## JavaDoc
+```
+& "C:\Program Files\Java\jdk-24\bin\javadoc.exe" `
+-d docs `
+-sourcepath src `
+-subpackages com:chart `
+-classpath "lib/*;."
+```
 ## References
 1. Singleton Design Pattern, Retrieved from 
 https://sourcemaking.com/design_patterns/singleton
