@@ -627,10 +627,25 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         sep.setForeground(SEP_LIGHT);
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
 
-        JLabel credit = new JLabel("<html><center>Created by <b>Tye Zi Li / UPM</b></center></html>");
+        JLabel credit = new JLabel(
+            "<html><a href='https://github.com/zilitye/AccountDashboard' " +
+            "style='color:#007AFF;text-decoration:none;'>zilitye/AccountDashboard</a></html>",
+            SwingConstants.CENTER // centers text inside label
+        );
         credit.setFont(sf(Font.PLAIN, 13f));
         credit.setForeground(LABEL);
+        credit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // If parent uses BoxLayout.Y_AXIS:
         credit.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        credit.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                try {
+                    Desktop.getDesktop().browse(new java.net.URI("https://github.com/zilitye/AccountDashboard"));
+                } catch (Exception ex) { ex.printStackTrace(); }
+            }
+        });
 
         String disclaimerText = "<html><center>"
             + "This application is developed for academic and personal budgeting purposes. "
