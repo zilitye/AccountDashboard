@@ -11,14 +11,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Properties;
 
-/**
- * SettingsPage — lets the user edit the DB connection credentials.
- *
- * Credentials are persisted to db.properties next to the JAR so they
- * survive restarts. SQLConnection is re-initialised after a successful save.
- *
- * Supports both MySQL and Oracle JDBC connections.
- */
 public class SettingsPage extends JPanel {
 
     // ── colour / font tokens ─────────────────────────────────────────────────

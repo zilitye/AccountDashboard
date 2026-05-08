@@ -17,19 +17,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DatabasePage — displays all rows from the expenses table in a styled JTable.
- *
- * Features:
- *   • Refresh button  — re-queries the database asynchronously
- *   • Delete button   — removes the selected row from the DB, then reloads
- *   • Row-count badge in the header
- *   • macOS Sonoma-inspired design language
- *
- * Bug fixed: deleteSelectedRow() no longer wraps the shared singleton
- * Connection in a try-with-resources block, which previously closed the
- * connection before loadData() could use it.
- */
 public class DatabasePage extends JPanel {
 
     // ── Design tokens ────────────────────────────────────────────────────────
