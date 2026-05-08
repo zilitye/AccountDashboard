@@ -452,19 +452,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
 
     return row;
 }
-
-    private Component buildSidebarDivider() {
-        JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 4));
-        wrap.setOpaque(false);
-        JPanel line = new JPanel();
-        line.setBackground(SEP_LIGHT);
-        line.setOpaque(true);
-        line.setPreferredSize(new Dimension(SIDEBAR_W - 24, 1));
-        line.setMaximumSize(new Dimension(SIDEBAR_W - 24, 1));
-        wrap.add(line);
-        return wrap;
-    }
-
     // ════════════════════════════════════════════════════════════════════════
     // PAGE SWITCHER
     // ════════════════════════════════════════════════════════════════════════
