@@ -59,9 +59,9 @@ public class ExpensesComputeApplication extends JFrame {
         new Color(0xFF2D55), new Color(0x30B0C7)
     };
 
-    private static final int R         = 10;
-    private static final int SIDEBAR_W = 220;
-
+    private static final int R = 10, SIDEBAR_W = 220, STAT_CARD_H = 96, CHART_H = 350;
+    private static final int PAD = 22, VPAD = 14, HPAD = 12;
+    
     private static Font sf(int style, float size) {
         for (String n : new String[]{".SF NS Display",".SF NS Text","Helvetica Neue","Helvetica","SansSerif"}) {
             Font f = new Font(n, style, (int) size);
