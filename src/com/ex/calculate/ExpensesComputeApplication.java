@@ -22,8 +22,7 @@ import java.util.Map;
 public class ExpensesComputeApplication extends JFrame {
 
     // ── fields ───────────────────────────────────────────────────────────────
-    private JPanel   chartLeftPanel, chartRightPanel;
-    private JPanel   categorySummaryPanel;
+    private JPanel   chartLeftPanel, chartRightPanel, categorySummaryPanel;
     private JLabel   currentMonthSpendingLabel, averageExpensesLabel,
                      yearlyTotalLabel, monthChangeLabel;
     private JButton  tabButtonMonth, tabButtonYear;
@@ -32,57 +31,37 @@ public class ExpensesComputeApplication extends JFrame {
 
     private JLabel monthChangeIconLabel;
     private JPanel monthChangeIconCircle;
-    private Color monthChangeAccent;
+    private Color  monthChangeAccent;
 
-    // Add-expense dialog fields (created fresh each time)
-    private JComboBox<String> dlgCategoryBox;
-    private JTextField        dlgAmountField;
-    private JComboBox<String> dlgMonthBox;
-    private JSpinner          dlgYearSpinner;
-
-    private SwingWorker<Void,Void> pendingWorker; // cancel stale in-flight loads
+    private SwingWorker<Void,Void> pendingWorker;
     private ExpensesCompute compute;
     private int selectedYear  = LocalDate.now().getYear();
     private int selectedMonth = LocalDate.now().getMonthValue();
 
-    // ── Page routing ─────────────────────────────────────────────────────────
-    private JPanel        pageStack;          // CardLayout host
-    private CardLayout    cardLayout;
-    private DatabasePage  databasePage;
-    private SettingsPage  settingsPage;
-    private JPanel        overviewPage;       // the original main canvas
-    private String        activePage = "Overview";
-    // Sidebar nav row references for active-state toggling
-    private JPanel navOverview, navDatabase, navSettings;
-
     // ── macOS Sonoma color tokens ────────────────────────────────────────────
-    private static final Color BG           = new Color(0xf6f6f6);   // systemGroupedBackground
-    private static final Color SIDEBAR_BG   = new Color(0xf6f6f6);   // sidebar vibrancy simulation
-    private static final Color CARD_BG      = Color.WHITE;
-    private static final Color TOOLBAR_BG   = new Color(0xf6f6f6);
-
-    private static final Color SEP          = new Color(0xC6C6C8);   // opaqueSeparator
-    private static final Color SEP_LIGHT    = new Color(0xE5E5EA);
-
-    private static final Color LABEL        = new Color(0x1C1C1E);   // label
-    private static final Color LABEL_2      = new Color(0x6E6E73);   // secondaryLabel
-    private static final Color LABEL_3      = new Color(0xAEAEB2);   // tertiaryLabel
-
-    private static final Color ACCENT       = new Color(0x007AFF);   // systemBlue
-    private static final Color INDIGO       = new Color(0x5856D6);   // systemIndigo
-    private static final Color GREEN        = new Color(0x34C759);   // systemGreen
-    private static final Color RED          = new Color(0xFF3B30);   // systemRed
-    private static final Color ORANGE       = new Color(0xFF9500);   // systemOrange
+    private static final Color BG        = new Color(0xF6F6F6);
+    private static final Color SIDEBAR_BG= new Color(0xF6F6F6);
+    private static final Color CARD_BG   = Color.WHITE;
+    private static final Color TOOLBAR_BG= new Color(0xF6F6F6);
+    private static final Color SEP       = new Color(0xC6C6C8);
+    private static final Color SEP_LIGHT = new Color(0xE5E5EA);
+    private static final Color LABEL     = new Color(0x1C1C1E);
+    private static final Color LABEL_2   = new Color(0x6E6E73);
+    private static final Color LABEL_3   = new Color(0xAEAEB2);
+    private static final Color ACCENT    = new Color(0x007AFF);
+    private static final Color INDIGO    = new Color(0x5856D6);
+    private static final Color GREEN     = new Color(0x34C759);
+    private static final Color RED       = new Color(0xFF3B30);
+    private static final Color ORANGE    = new Color(0xFF9500);
 
     private static final Color[] CAT_COLORS = {
         ACCENT, GREEN, ORANGE, RED, INDIGO,
         new Color(0xFF2D55), new Color(0x30B0C7)
     };
 
-    private static final int R          = 10;   // standard card radius
-    private static final int SIDEBAR_W  = 220;
+    private static final int R         = 10;
+    private static final int SIDEBAR_W = 220;
 
-    // ── font helper ──────────────────────────────────────────────────────────
     private static Font sf(int style, float size) {
         for (String n : new String[]{".SF NS Display",".SF NS Text","Helvetica Neue","Helvetica","SansSerif"}) {
             Font f = new Font(n, style, (int) size);
@@ -100,13 +79,13 @@ public class ExpensesComputeApplication extends JFrame {
 
         try {
             UIManager.setLookAndFeel(new FlatMacLightLaf());
-            UIManager.put("Component.focusWidth",  0);
-            UIManager.put("Button.arc",            R);
-            UIManager.put("TextComponent.arc",     R);
-            UIManager.put("ComboBox.arc",          R);
-            UIManager.put("Panel.background",      BG);
-            UIManager.put("ScrollBar.width",       7);
-            UIManager.put("ScrollBar.thumbArc",    999);
+            UIManager.put("Component.focusWidth", 0);
+            UIManager.put("Button.arc",           R);
+            UIManager.put("TextComponent.arc",    R);
+            UIManager.put("ComboBox.arc",         R);
+            UIManager.put("Panel.background",     BG);
+            UIManager.put("ScrollBar.width",      7);
+            UIManager.put("ScrollBar.thumbArc",   999);
         } catch (Exception e) { e.printStackTrace(); }
 
         setLayout(new BorderLayout());
@@ -114,135 +93,73 @@ public class ExpensesComputeApplication extends JFrame {
 
         add(buildTitleBar(), BorderLayout.NORTH);
 
-        // Build pages
-        overviewPage = buildMainCanvas();
-        databasePage = new DatabasePage();
-        settingsPage = new SettingsPage();
-
-        cardLayout = new CardLayout();
-        pageStack  = new JPanel(cardLayout);
-        pageStack.setBackground(BG);
-        pageStack.add(overviewPage, "Overview");
-        pageStack.add(databasePage, "Database");
-        pageStack.add(settingsPage, "Settings");
-
         JPanel body = new JPanel(new BorderLayout());
         body.setBackground(BG);
-        body.add(buildSidebar(),  BorderLayout.WEST);
-        body.add(pageStack,       BorderLayout.CENTER);
+        body.add(buildSidebar(),     BorderLayout.WEST);
+        body.add(buildMainCanvas(),  BorderLayout.CENTER);
         add(body, BorderLayout.CENTER);
 
         setSize(1340, 840);
         setMinimumSize(new Dimension(980, 640));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-setVisible(true);
+        setVisible(true);
 
-        SwingUtilities.invokeLater(() -> {
-            refreshNavHighlights("Overview"); // ✅ fix initial text color
-            updateCharts();
-        });
+        SwingUtilities.invokeLater(this::updateCharts);
     }
 
     // ════════════════════════════════════════════════════════════════════════
     // TITLE BAR
     // ════════════════════════════════════════════════════════════════════════
     private JPanel buildTitleBar() {
-        // Full-width painted panel
         JPanel bar = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setColor(TOOLBAR_BG);
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 g2.setColor(SEP);
-                g2.fillRect(0, getHeight() - 1, getWidth(), 1);
+                g2.fillRect(0, getHeight()-1, getWidth(), 1);
                 g2.dispose();
             }
         };
         bar.setOpaque(false);
         bar.setPreferredSize(new Dimension(0, 50));
 
-        // ── LEFT: traffic lights + app title (aligned with sidebar) ──────────
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.X_AXIS));
         left.setOpaque(false);
         left.setPreferredSize(new Dimension(SIDEBAR_W, 50));
         left.setBorder(BorderFactory.createEmptyBorder(0, 14, 0, 0));
-
         JLabel title = new JLabel("Account Dashboard");
         title.setFont(sf(Font.BOLD, 13f));
         title.setForeground(LABEL);
-
-        //left.add(lights);
         left.add(Box.createHorizontalStrut(10));
         left.add(title);
         bar.add(left, BorderLayout.WEST);
 
-        // ── CENTER: segmented control + month/year pickers ────────────────────
         JPanel center = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 9));
         center.setOpaque(false);
-
         center.add(buildSegmentedControl());
         center.add(thinRule(1, 24));
-
         center.add(smallLabel("Month"));
-        String[] months = {"January","February","March","April","May","June",
-                           "July","August","September","October","November","December"};
-        monthSelector = new JComboBox<>(months);
+        monthSelector = new JComboBox<>(new String[]{
+            "January","February","March","April","May","June",
+            "July","August","September","October","November","December"});
         monthSelector.setSelectedIndex(selectedMonth - 1);
         monthSelector.setFont(sf(Font.PLAIN, 12f));
         monthSelector.setPreferredSize(new Dimension(118, 28));
         monthSelector.addActionListener(e -> { selectedMonth = monthSelector.getSelectedIndex()+1; updateCharts(); });
         center.add(monthSelector);
-
         center.add(thinRule(1, 24));
         center.add(smallLabel("Year"));
-
-        SpinnerNumberModel ym = new SpinnerNumberModel(selectedYear, 2000, 2099, 1);
-        JSpinner yearSpinner = new JSpinner(ym);
+        JSpinner yearSpinner = new JSpinner(new SpinnerNumberModel(selectedYear, 2000, 2099, 1));
         yearSpinner.setFont(sf(Font.PLAIN, 12f));
         yearSpinner.setPreferredSize(new Dimension(72, 28));
         yearSpinner.addChangeListener(e -> { selectedYear = (int) yearSpinner.getValue(); updateCharts(); });
         center.add(yearSpinner);
-
         bar.add(center, BorderLayout.CENTER);
 
-        // ── RIGHT: "+ Add Expense" button ─────────────────────────────────────
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 9));
-        right.setOpaque(false);
-
-        JButton addBtn = buildToolbarAddButton();
-        right.add(addBtn);
-        bar.add(right, BorderLayout.EAST);
-
         return bar;
-    }
-
-    /** The blue "+ Add Expense" toolbar button */
-    private JButton buildToolbarAddButton() {
-        JButton btn = new JButton("+ Add Expense") {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isPressed() ? new Color(0x0065D9) : ACCENT);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
-                g2.setFont(getFont());
-                g2.setColor(Color.WHITE);
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(),
-                    (getWidth() - fm.stringWidth(getText())) / 2,
-                    (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
-                g2.dispose();
-            }
-        };
-        btn.setFont(sf(Font.PLAIN, 13f));
-        btn.setPreferredSize(new Dimension(130, 30));
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.addActionListener(e -> showAddExpenseDialog());
-        return btn;
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -260,7 +177,6 @@ setVisible(true);
         };
         seg.setOpaque(false);
         seg.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-
         tabButtonMonth = buildSegBtn("Monthly", true);
         tabButtonYear  = buildSegBtn("Yearly",  false);
         seg.add(tabButtonMonth);
@@ -275,26 +191,21 @@ setVisible(true);
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 if (isActive()) {
-                    // white pill with subtle drop shadow
                     g2.setColor(new Color(0,0,0,25));
                     g2.fillRoundRect(1, 2, getWidth(), getHeight(), 7, 7);
                     g2.setColor(CARD_BG);
                     g2.fillRoundRect(0, 0, getWidth(), getHeight(), 7, 7);
                 }
-                g2.setFont(getFont());
-                g2.setColor(getForeground());
+                g2.setFont(getFont()); g2.setColor(getForeground());
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(),
-                    (getWidth()-fm.stringWidth(getText()))/2,
+                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2,
                     (getHeight()+fm.getAscent()-fm.getDescent())/2);
                 g2.dispose();
             }
         };
         btn.setFont(sf(active ? Font.BOLD : Font.PLAIN, 12.5f));
         btn.setPreferredSize(new Dimension(78, 24));
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false); btn.setBorderPainted(false); btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setBackground(active ? CARD_BG : new Color(0,0,0,0));
         btn.setForeground(active ? LABEL : LABEL_2);
@@ -316,12 +227,11 @@ setVisible(true);
         active.setBackground(CARD_BG);
         active.setForeground(LABEL);
         active.setFont(sf(Font.BOLD, 12.5f));
-        tabButtonMonth.repaint();
-        tabButtonYear.repaint();
+        tabButtonMonth.repaint(); tabButtonYear.repaint();
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // SIDEBAR
+    // SIDEBAR  (Overview only — Database/Settings pages removed)
     // ════════════════════════════════════════════════════════════════════════
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel(new BorderLayout()) {
@@ -329,7 +239,6 @@ setVisible(true);
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setColor(SIDEBAR_BG);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                // right hairline
                 g2.setColor(SEP);
                 g2.fillRect(getWidth()-1, 0, 1, getHeight());
                 g2.dispose();
@@ -338,408 +247,72 @@ setVisible(true);
         sidebar.setOpaque(false);
         sidebar.setPreferredSize(new Dimension(SIDEBAR_W, 0));
 
-        // ── Top: nav items ────────────────────────────────────────────────────
         JPanel nav = new JPanel();
         nav.setLayout(new BoxLayout(nav, BoxLayout.Y_AXIS));
         nav.setOpaque(false);
         nav.setBorder(BorderFactory.createEmptyBorder(16, 0, 0, 0));
-
-        // Section label: "MENU"
         nav.add(sidebarSectionLabel("MENU"));
         nav.add(Box.createVerticalStrut(4));
-
-        String[][] items = {
-            {"⊞", "Overview"},
-            {"◫", "Database"},
-            {"⚙", "Settings"},
-        };
-        for (int i = 0; i < items.length; i++) {
-            final String pageName = items[i][1];
-            boolean isActive = (i == 0);
-            JPanel navItem = buildNavItem(items[i][0], pageName, isActive, () -> switchPage(pageName));
-            if (pageName.equals("Overview"))  navOverview  = navItem;
-            if (pageName.equals("Database"))  navDatabase  = navItem;
-            if (pageName.equals("Settings"))  navSettings  = navItem;
-            nav.add(navItem);
-        }
-
+        nav.add(buildNavItem("⊞", "Overview", true, null));
         sidebar.add(nav, BorderLayout.NORTH);
-
-        // ── Bottom: ⓘ About ───────────────────────────────────────────────────
-        JPanel bottom = new JPanel();
-        bottom.setLayout(new BoxLayout(bottom, BoxLayout.Y_AXIS));
-        bottom.setOpaque(false);
-        bottom.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
-
-        // hairline divider
-        bottom.add(buildSidebarDivider());
-        bottom.add(Box.createVerticalStrut(6));
-        bottom.add(buildNavItem("ⓘ", "About", false, () -> showAboutDialog()));
-
-        sidebar.add(bottom, BorderLayout.SOUTH);
 
         return sidebar;
     }
 
     private JPanel sidebarSectionLabel(String text) {
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-
+        JPanel w = new JPanel(new BorderLayout());
+        w.setOpaque(false);
+        w.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        w.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
         JLabel lbl = new JLabel(text);
         lbl.setFont(sf(Font.BOLD, 10f));
         lbl.setForeground(LABEL_3);
-
-        // SAME left inset as nav items
-        wrapper.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
-
-        wrapper.add(lbl, BorderLayout.WEST); // stick to left properly
-        return wrapper;
+        w.add(lbl, BorderLayout.WEST);
+        return w;
     }
 
-    /** Nav item with optional click action */
-private JPanel buildNavItem(String icon, String label, boolean active, Runnable onClick) {
-
-    JPanel row = new JPanel(new BorderLayout()) {
-        @Override protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            boolean isActive = Boolean.TRUE.equals(getClientProperty("navActive"));
-            boolean hover    = Boolean.TRUE.equals(getClientProperty("hover"));
-
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            if (isActive) {
-                g2.setColor(ACCENT);
-                g2.fillRoundRect(6, 3, getWidth()-12, getHeight()-6, 8, 8);
-            } else if (hover) {
-                g2.setColor(new Color(0,0,0,18));
-                g2.fillRoundRect(6, 3, getWidth()-12, getHeight()-6, 8, 8);
-            }
-
-            g2.dispose();
-        }
-    };
-
-    row.setOpaque(false);
-    row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-    row.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
-    row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-    // set initial state
-    row.putClientProperty("navActive", active);
-
-    JPanel inner = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
-    inner.setOpaque(false);
-
-JLabel ico = new JLabel(icon);
-ico.setFont(sf(Font.PLAIN, 14f));
-ico.setPreferredSize(new Dimension(18, 18));
-ico.setForeground(active ? Color.WHITE : LABEL_2);
-
-JLabel lbl = new JLabel(label);
-lbl.setFont(UIManager.getFont(active ? "h3.font" : "h3.regular.font"));
-lbl.setForeground(active ? Color.WHITE : LABEL);
-
-    inner.add(ico);
-    inner.add(lbl);
-    row.add(inner, BorderLayout.CENTER);
-
-    // hover + click
-    row.addMouseListener(new MouseAdapter() {
-        @Override public void mouseEntered(MouseEvent e) {
-            row.putClientProperty("hover", true);
-            row.repaint();
-        }
-
-        @Override public void mouseExited(MouseEvent e) {
-            row.putClientProperty("hover", false);
-            row.repaint();
-        }
-
-        @Override public void mouseClicked(MouseEvent e) {
-            if (onClick != null) onClick.run();
-        }
-    });
-
-    return row;
-}
-
-    private Component buildSidebarDivider() {
-        JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 4));
-        wrap.setOpaque(false);
-        JPanel line = new JPanel();
-        line.setBackground(SEP_LIGHT);
-        line.setOpaque(true);
-        line.setPreferredSize(new Dimension(SIDEBAR_W - 24, 1));
-        line.setMaximumSize(new Dimension(SIDEBAR_W - 24, 1));
-        wrap.add(line);
-        return wrap;
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // PAGE SWITCHER
-    // ════════════════════════════════════════════════════════════════════════
-    private void switchPage(String pageName) {
-        if (pageName.equals(activePage)) return;
-        activePage = pageName;
-
-        // Show the right card
-        cardLayout.show(pageStack, pageName);
-
-        // Refresh data-heavy pages each time they are shown
-        if (pageName.equals("Database") && databasePage != null) {
-            databasePage.loadData();
-        }
-        // Always refresh Overview so stale values never linger
-        if (pageName.equals("Overview")) {
-            updateCharts();
-        }
-
-        refreshNavHighlights(pageName);
-    }
-
-    /**
-     * Updates the blue selection pill across the three nav rows without
-     * rebuilding the entire sidebar.  We reach inside each hoverRow and
-     * swap the background/foreground of the icon+label panel it contains.
-     */
-    private void refreshNavHighlights(String activeName) {
-        JPanel[] rows  = {navOverview, navDatabase, navSettings};
-        String[] names = {"Overview",  "Database",  "Settings"};
-
-        for (int i = 0; i < rows.length; i++) {
-            if (rows[i] == null) continue;
-            final boolean active = names[i].equals(activeName);
-            // Walk the inner panel to find icon and label
-            for (Component child : rows[i].getComponents()) {
-                if (child instanceof JPanel) {
-                    JPanel inner = (JPanel) child;
-                    for (Component c2 : inner.getComponents()) {
-                        if (c2 instanceof JLabel) {
-                            JLabel lbl = (JLabel) c2;
-                            boolean isIcon = lbl.getText().length() <= 2;
-
-                            lbl.setForeground(active
-                                ? Color.WHITE
-                                : (isIcon ? LABEL_2 : LABEL));
-
-                            // 🔥 ADD THIS LINE
-                            lbl.setFont(UIManager.getFont(active ? "h3.font" : "h3.regular.font"));
-                        }
-                    }
+    private JPanel buildNavItem(String icon, String label, boolean active, Runnable onClick) {
+        JPanel row = new JPanel(new BorderLayout()) {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                boolean isActive = Boolean.TRUE.equals(getClientProperty("navActive"));
+                boolean hover    = Boolean.TRUE.equals(getClientProperty("hover"));
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (isActive) {
+                    g2.setColor(ACCENT);
+                    g2.fillRoundRect(6, 3, getWidth()-12, getHeight()-6, 8, 8);
+                } else if (hover) {
+                    g2.setColor(new Color(0,0,0,18));
+                    g2.fillRoundRect(6, 3, getWidth()-12, getHeight()-6, 8, 8);
                 }
+                g2.dispose();
             }
-            // Toggle the painted blue pill by storing active flag as client property
-            rows[i].putClientProperty("navActive", active);
-            rows[i].repaint();
-        }
-        setVisible(true);
-    }
+        };
+        row.setOpaque(false);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        row.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        row.putClientProperty("navActive", active);
 
-    // ════════════════════════════════════════════════════════════════════════
-    // ABOUT DIALOG
-    // ════════════════════════════════════════════════════════════════════════
-    private void showAboutDialog() {
-        JDialog dlg = new JDialog(this, "About Account Dashboard", true);
-        dlg.setSize(400, 300);
-        dlg.setLocationRelativeTo(this);
-        dlg.setResizable(false);
+        JPanel inner = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        inner.setOpaque(false);
+        JLabel ico = new JLabel(icon);
+        ico.setFont(sf(Font.PLAIN, 14f));
+        ico.setPreferredSize(new Dimension(18, 18));
+        ico.setForeground(active ? Color.WHITE : LABEL_2);
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(UIManager.getFont(active ? "h3.font" : "h3.regular.font"));
+        lbl.setForeground(active ? Color.WHITE : LABEL);
+        inner.add(ico); inner.add(lbl);
+        row.add(inner, BorderLayout.CENTER);
 
-        JPanel root = new JPanel();
-        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
-        root.setBackground(CARD_BG);
-        root.setBorder(BorderFactory.createEmptyBorder(32, 36, 28, 36));
-
-        JLabel appName = new JLabel("Account Dashboard");
-        appName.setFont(sf(Font.BOLD, 17f));
-        appName.setForeground(LABEL);
-        appName.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel version = new JLabel("Version 1.2.2");
-        version.setFont(sf(Font.PLAIN, 12f));
-        version.setForeground(LABEL_2);
-        version.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // hairline divider
-        JSeparator sep = new JSeparator();
-        sep.setForeground(SEP_LIGHT);
-        sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-
-        JLabel credit = new JLabel(
-            "<html><a href='https://github.com/zilitye/AccountDashboard' " +
-            "style='color:#007AFF;text-decoration:none;'>zilitye/AccountDashboard</a></html>",
-            SwingConstants.CENTER // centers text inside label
-        );
-        credit.setFont(sf(Font.PLAIN, 13f));
-        credit.setForeground(LABEL);
-        credit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        // If parent uses BoxLayout.Y_AXIS:
-        credit.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        credit.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-                try {
-                    Desktop.getDesktop().browse(new java.net.URI("https://github.com/zilitye/AccountDashboard"));
-                } catch (Exception ex) { ex.printStackTrace(); }
-            }
+        row.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) { row.putClientProperty("hover", true);  row.repaint(); }
+            @Override public void mouseExited(MouseEvent e)  { row.putClientProperty("hover", false); row.repaint(); }
+            @Override public void mouseClicked(MouseEvent e) { if (onClick != null) onClick.run(); }
         });
-
-        String disclaimerText = "<html><center>"
-            + "This application is developed for academic and personal budgeting purposes. "
-            + "All financial data is stored locally. No data is transmitted or shared externally."
-            + "</center></html>";
-        JLabel disclaimer = new JLabel(disclaimerText);
-        disclaimer.setFont(sf(Font.PLAIN, 11.5f));
-        disclaimer.setForeground(LABEL_2);
-        disclaimer.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JButton closeBtn = buildBlueButton("OK");
-        closeBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        closeBtn.setMaximumSize(new Dimension(80, 30));
-        closeBtn.addActionListener(e -> dlg.dispose());
-
-        //root.add(iconCircle);
-        //root.add(Box.createVerticalStrut(12));
-        root.add(appName);
-        root.add(Box.createVerticalStrut(4));
-        root.add(version);
-        root.add(Box.createVerticalStrut(18));
-        root.add(sep);
-        root.add(Box.createVerticalStrut(14));
-        root.add(credit);
-        root.add(Box.createVerticalStrut(8));
-        root.add(disclaimer);
-        root.add(Box.createVerticalStrut(20));
-        root.add(closeBtn);
-
-        dlg.setContentPane(root);
-        dlg.setVisible(true);
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // ADD EXPENSE DIALOG  (shown by toolbar button)
-    // ════════════════════════════════════════════════════════════════════════
-    private void showAddExpenseDialog() {
-        JDialog dlg = new JDialog(this, "Add Expense", true);
-        dlg.setSize(380, 345);
-        dlg.setResizable(false);
-        dlg.setLocationRelativeTo(this);
-
-        JPanel root = new JPanel();
-        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
-        root.setBackground(CARD_BG);
-        root.setBorder(BorderFactory.createEmptyBorder(24, 28, 20, 28));
-
-        JLabel heading = new JLabel("New Expense");
-        heading.setFont(sf(Font.BOLD, 16f));
-        heading.setForeground(LABEL);
-        heading.setAlignmentX(Component.LEFT_ALIGNMENT);
-        root.add(heading);
-        root.add(Box.createVerticalStrut(20));
-
-        // Category row
-        root.add(formLabel("Category"));
-        root.add(Box.createVerticalStrut(4));
-        dlgCategoryBox = new JComboBox<>(new String[]{
-            "Food & Beverages","Entertainment","Leisure & Sports",
-            "Services","Shopping","Telecom","Utilities"
-        });
-        dlgCategoryBox.setFont(sf(Font.PLAIN, 13f));
-        dlgCategoryBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
-        dlgCategoryBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        root.add(dlgCategoryBox);
-        root.add(Box.createVerticalStrut(14));
-
-        // Amount row
-        root.add(formLabel("Amount (RM)"));
-        root.add(Box.createVerticalStrut(4));
-        dlgAmountField = new JTextField();
-        dlgAmountField.setFont(sf(Font.PLAIN, 13f));
-        dlgAmountField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
-        dlgAmountField.setAlignmentX(Component.LEFT_ALIGNMENT);
-        dlgAmountField.setBackground(new Color(0xF9F9FB));
-        dlgAmountField.setBorder(BorderFactory.createCompoundBorder(
-            new MacBorder(SEP, 8),
-            BorderFactory.createEmptyBorder(5, 9, 5, 9)
-        ));
-        root.add(dlgAmountField);
-        root.add(Box.createVerticalStrut(14));
-
-        // Month + Year row
-        JPanel dateRow = new JPanel(new GridLayout(1, 2, 12, 0));
-        dateRow.setOpaque(false);
-        dateRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        dateRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 68));
-
-        JPanel monthCol = new JPanel();
-        monthCol.setLayout(new BoxLayout(monthCol, BoxLayout.Y_AXIS));
-        monthCol.setOpaque(false);
-        monthCol.add(formLabel("Month"));
-        monthCol.add(Box.createVerticalStrut(4));
-        String[] monthNames = {"January","February","March","April","May","June",
-                               "July","August","September","October","November","December"};
-        dlgMonthBox = new JComboBox<>(monthNames);
-        dlgMonthBox.setSelectedIndex(selectedMonth - 1);
-        dlgMonthBox.setFont(sf(Font.PLAIN, 13f));
-        dlgMonthBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
-        monthCol.add(dlgMonthBox);
-        dateRow.add(monthCol);
-
-        JPanel yearCol = new JPanel();
-        yearCol.setLayout(new BoxLayout(yearCol, BoxLayout.Y_AXIS));
-        yearCol.setOpaque(false);
-        yearCol.add(formLabel("Year"));
-        yearCol.add(Box.createVerticalStrut(4));
-        dlgYearSpinner = new JSpinner(new SpinnerNumberModel(selectedYear, 2000, 2099, 1));
-        dlgYearSpinner.setFont(sf(Font.PLAIN, 13f));
-        dlgYearSpinner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
-        yearCol.add(dlgYearSpinner);
-        dateRow.add(yearCol);
-
-        root.add(dateRow);
-        root.add(Box.createVerticalStrut(24));
-
-        // Buttons row
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        btnRow.setOpaque(false);
-        btnRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btnRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-
-        JButton cancel = buildGrayButton("Cancel");
-        cancel.addActionListener(e -> dlg.dispose());
-
-        JButton add = buildBlueButton("Add");
-        add.addActionListener(e -> {
-            try {
-                String cat    = (String) dlgCategoryBox.getSelectedItem();
-                String amtTxt = dlgAmountField.getText().trim();
-                if (amtTxt.isEmpty()) {
-                    JOptionPane.showMessageDialog(dlg, "Please enter an amount.", "Required", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                double amount = Double.parseDouble(amtTxt);
-                int    month  = dlgMonthBox.getSelectedIndex() + 1;
-                int    year   = (int) dlgYearSpinner.getValue();
-                compute.addExpense(year, month, cat, amount);
-                dlg.dispose();
-                updateCharts();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dlg, "Enter a valid number.", "Invalid", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        btnRow.add(cancel);
-        btnRow.add(add);
-        root.add(btnRow);
-
-        dlg.setContentPane(root);
-
-        // Press Enter to submit
-        dlg.getRootPane().setDefaultButton(add);
-        dlg.setVisible(true);
+        return row;
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -754,18 +327,16 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         inner.setBackground(BG);
         inner.setBorder(BorderFactory.createEmptyBorder(22, 22, 22, 22));
 
-        // ── Row 1: 4 stat cards ───────────────────────────────────────────────
         JPanel statsRow = new JPanel(new GridLayout(1, 4, 12, 0));
         statsRow.setOpaque(false);
         statsRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 96));
-        statsRow.add(buildStatCard("Yearly Total",  yearlyTotalLabelRef(),          ACCENT,  "◈"));
-        statsRow.add(buildStatCard("vs Last Month", monthChangeLabelRef(),           RED,  "↑"));
-        statsRow.add(buildStatCard("Avg / Month",   averageExpensesLabelRef(),       INDIGO, "⌀"));
-        statsRow.add(buildStatCard("This Month",    currentMonthSpendingLabelRef(),  ORANGE, "●"));
+        statsRow.add(buildStatCard("Yearly Total",  yearlyTotalLabelRef(),         ACCENT,  "◈"));
+        statsRow.add(buildStatCard("vs Last Month", monthChangeLabelRef(),          RED,     "↑"));
+        statsRow.add(buildStatCard("Avg / Month",   averageExpensesLabelRef(),      INDIGO,  "⌀"));
+        statsRow.add(buildStatCard("This Month",    currentMonthSpendingLabelRef(), ORANGE,  "●"));
         inner.add(statsRow);
         inner.add(Box.createVerticalStrut(14));
 
-        // ── Row 2: 2 charts ───────────────────────────────────────────────────
         JPanel chartsRow = new JPanel(new GridLayout(1, 2, 12, 0));
         chartsRow.setOpaque(false);
 
@@ -783,8 +354,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
 
         inner.add(chartsRow);
         inner.add(Box.createVerticalStrut(14));
-
-        // ── Row 3: category breakdown ─────────────────────────────────────────
         inner.add(buildCategoryBreakdownCard());
         inner.add(Box.createVerticalGlue());
 
@@ -805,47 +374,35 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         JPanel card = createCard();
         card.setLayout(new BorderLayout(14, 0));
 
-        // Tinted icon circle
         JPanel iconCircle = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                Color c = (monthChangeIconCircle == this && monthChangeAccent != null)
-                        ? monthChangeAccent
-                        : accent;
-
+                Color c = (monthChangeIconCircle == this && monthChangeAccent != null) ? monthChangeAccent : accent;
                 g2.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 30));
                 g2.fillOval(0, 0, getWidth(), getHeight());
-
                 g2.dispose();
             }
-
-            @Override public Dimension getPreferredSize() {
-                return new Dimension(34, 34);
-            }
+            @Override public Dimension getPreferredSize() { return new Dimension(34, 34); }
         };
+        iconCircle.setOpaque(false);
+        iconCircle.setLayout(new GridBagLayout());
 
         JLabel iconLabel = new JLabel(icon);
         iconLabel.setFont(sf(Font.PLAIN, 15f));
         iconLabel.setForeground(accent);
-
         iconCircle.add(iconLabel);
 
-        iconCircle.setOpaque(false);
-        iconCircle.setLayout(new GridBagLayout());
-
         if (title.equals("vs Last Month")) {
-        monthChangeIconLabel = iconLabel;
-        monthChangeIconCircle = iconCircle;
-        monthChangeAccent = accent; // initial (green)
-}
+            monthChangeIconLabel  = iconLabel;
+            monthChangeIconCircle = iconCircle;
+            monthChangeAccent     = accent;
+        }
 
         JPanel iconWrap = new JPanel(new GridBagLayout());
         iconWrap.setOpaque(false);
         iconWrap.add(iconCircle);
 
-        // Text block
         JPanel text = new JPanel();
         text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
         text.setOpaque(false);
@@ -853,7 +410,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         JLabel titleLbl = new JLabel(title);
         titleLbl.setFont(sf(Font.PLAIN, 11.5f));
         titleLbl.setForeground(LABEL_2);
-
         valueLabel.setFont(UIManager.getFont("h3.font"));
         valueLabel.setForeground(LABEL);
 
@@ -873,19 +429,16 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         JPanel card = createCard();
         card.setLayout(new BorderLayout(0, 12));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-
         JLabel title = new JLabel("Yearly Breakdown");
         title.setFont(UIManager.getFont("h3.font"));
         title.setForeground(LABEL);
         card.add(title, BorderLayout.NORTH);
-
         categorySummaryPanel = new JPanel(new GridLayout(0, 4, 10, 8));
         categorySummaryPanel.setBackground(CARD_BG);
         card.add(categorySummaryPanel, BorderLayout.CENTER);
         return card;
     }
 
-    // Called from the SwingWorker's done() with real data, or with null when offline
     private void updateCategoryBreakdown(Map<String, Double> totals) {
         if (categorySummaryPanel == null) return;
         categorySummaryPanel.removeAll();
@@ -897,8 +450,7 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         } else {
             int ci = 0;
             for (Map.Entry<String, Double> entry : totals.entrySet()) {
-                categorySummaryPanel.add(buildCategoryChip(entry.getKey(), entry.getValue(), CAT_COLORS[ci % CAT_COLORS.length]));
-                ci++;
+                categorySummaryPanel.add(buildCategoryChip(entry.getKey(), entry.getValue(), CAT_COLORS[ci++ % CAT_COLORS.length]));
             }
         }
         categorySummaryPanel.revalidate();
@@ -918,10 +470,8 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         chip.setOpaque(false);
         chip.setBorder(BorderFactory.createCompoundBorder(
             new MacBorder(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 55), 10),
-            BorderFactory.createEmptyBorder(10, 12, 10, 12)
-        ));
+            BorderFactory.createEmptyBorder(10, 12, 10, 12)));
 
-        // dot
         JPanel dot = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -937,20 +487,17 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         JPanel textCol = new JPanel();
         textCol.setLayout(new BoxLayout(textCol, BoxLayout.Y_AXIS));
         textCol.setOpaque(false);
-
         JLabel catLbl = new JLabel(category);
         catLbl.setFont(sf(Font.PLAIN, 11.5f));
         catLbl.setForeground(LABEL_2);
-
         JLabel amtLbl = new JLabel(String.format("RM %.2f", amount));
-        amtLbl.setFont(UIManager.getFont(	"h3.font"));
+        amtLbl.setFont(UIManager.getFont("h3.font"));
         amtLbl.setForeground(LABEL);
-
         textCol.add(catLbl);
         textCol.add(Box.createVerticalStrut(2));
         textCol.add(amtLbl);
 
-        chip.add(dot,    BorderLayout.WEST);
+        chip.add(dot,     BorderLayout.WEST);
         chip.add(textCol, BorderLayout.CENTER);
         return chip;
     }
@@ -959,26 +506,20 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
     // UPDATE CHARTS
     // ════════════════════════════════════════════════════════════════════════
     public void updateCharts() {
-        // Cancel any in-flight worker — its done() will be a no-op
-        if (pendingWorker != null && !pendingWorker.isDone()) {
-            pendingWorker.cancel(false);
-        }
+        if (pendingWorker != null && !pendingWorker.isDone()) pendingWorker.cancel(false);
 
-        // Snapshot the current selection so the worker uses consistent values
         final int year  = selectedYear;
         final int month = selectedMonth;
         final int mode  = currentViewMode;
 
         pendingWorker = new SwingWorker<Void, Void>() {
-
-            private boolean      dbOk = false;
-            private double       monthlyTotal, avgMonthly, yearlyTotal, monthChange;
-            private JFreeChart   leftChart, rightChart;
+            private boolean dbOk;
+            private double  monthlyTotal, avgMonthly, yearlyTotal, monthChange;
+            private JFreeChart leftChart, rightChart;
             private Map<String, Double> catTotals;
 
             @Override
             protected Void doInBackground() {
-                // ALL blocking DB/network work here — EDT stays free
                 try {
                     Connection conn = SQLConnection.getInstance().getConnection();
                     if (conn == null || conn.isClosed()) return null;
@@ -1000,20 +541,14 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
                         rightChart = theme(ChartBar.createCategoryBarChart(yearly, "Yearly Overview", "Category", "Amount (RM)"));
                     }
                     dbOk = true;
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                } catch (Exception ex) { ex.printStackTrace(); }
                 return null;
             }
 
             @Override
             protected void done() {
-                // Discard result if this worker was cancelled (a newer one is running)
                 if (isCancelled()) return;
-
-                // ── Atomic swap: clear + repopulate in one EDT pass ───────────
                 if (!dbOk) {
-                    // Reset cards
                     currentMonthSpendingLabel.setText("—");
                     averageExpensesLabel.setText("—");
                     yearlyTotalLabel.setText("—");
@@ -1025,18 +560,15 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
                         monthChangeAccent = LABEL_2;
                         monthChangeIconCircle.repaint();
                     }
-                    // Clear charts
                     chartLeftPanel.removeAll();
                     chartRightPanel.removeAll();
                     showNoDbPlaceholder();
                     updateCategoryBreakdown(null);
                 } else {
-                    // Update cards
                     currentMonthSpendingLabel.setText(String.format("RM %.2f", monthlyTotal));
                     averageExpensesLabel.setText(String.format("RM %.2f", avgMonthly));
                     yearlyTotalLabel.setText(String.format("RM %.2f", yearlyTotal));
-                    monthChangeLabel.setText(monthChange != 0
-                            ? String.format("%+.1f%%", monthChange) : "—");
+                    monthChangeLabel.setText(monthChange != 0 ? String.format("%+.1f%%", monthChange) : "—");
 
                     if (monthChange < 0) {
                         monthChangeLabel.setForeground(GREEN);
@@ -1053,7 +585,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
                     }
                     monthChangeIconCircle.repaint();
 
-                    // Swap charts atomically — old content stays until new is ready
                     chartLeftPanel.removeAll();
                     chartRightPanel.removeAll();
                     ChartFrame lf = new ChartFrame(leftChart);
@@ -1064,7 +595,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
                     chartRightPanel.add(rf, BorderLayout.CENTER);
                     updateCategoryBreakdown(catTotals);
                 }
-
                 chartLeftPanel.revalidate();  chartLeftPanel.repaint();
                 chartRightPanel.revalidate(); chartRightPanel.repaint();
             }
@@ -1072,20 +602,20 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         pendingWorker.execute();
     }
 
-// ── Extracted helper ───────────────────────────────────────────────────────
-private void showNoDbPlaceholder() {
-    JLabel err = new JLabel("Database connection required.");
-    err.setForeground(LABEL_3);
-    err.setFont(sf(Font.PLAIN, 12f));
-    err.setHorizontalAlignment(JLabel.CENTER);
-    chartLeftPanel.add(err, BorderLayout.CENTER);
-}
+    private void showNoDbPlaceholder() {
+        JLabel err = new JLabel("Database connection required.");
+        err.setForeground(LABEL_3);
+        err.setFont(sf(Font.PLAIN, 12f));
+        err.setHorizontalAlignment(JLabel.CENTER);
+        chartLeftPanel.add(err, BorderLayout.CENTER);
+    }
+
     private JFreeChart theme(JFreeChart chart) {
         chart.setBackgroundPaint(CARD_BG);
         chart.getPlot().setBackgroundPaint(CARD_BG);
         if (chart.getTitle() != null) {
             chart.getTitle().setPaint(LABEL);
-            chart.getTitle().setFont(UIManager.getFont(	"h3.font"));
+            chart.getTitle().setFont(UIManager.getFont("h3.font"));
         }
         if (chart.getLegend() != null) {
             chart.getLegend().setBackgroundPaint(CARD_BG);
@@ -1095,14 +625,10 @@ private void showNoDbPlaceholder() {
         if (chart.getPlot() instanceof org.jfree.chart.plot.CategoryPlot) {
             org.jfree.chart.plot.CategoryPlot p = (org.jfree.chart.plot.CategoryPlot) chart.getPlot();
             p.setRangeGridlinePaint(SEP_LIGHT);
-            p.getDomainAxis().setTickLabelPaint(LABEL_2);
-            p.getDomainAxis().setLabelPaint(LABEL_2);
-            p.getDomainAxis().setAxisLinePaint(SEP_LIGHT);
-            p.getDomainAxis().setTickLabelFont(sf(Font.PLAIN, 10f));
-            p.getRangeAxis().setTickLabelPaint(LABEL_2);
-            p.getRangeAxis().setLabelPaint(LABEL_2);
-            p.getRangeAxis().setAxisLinePaint(SEP_LIGHT);
-            p.getRangeAxis().setTickLabelFont(sf(Font.PLAIN, 10f));
+            p.getDomainAxis().setTickLabelPaint(LABEL_2); p.getDomainAxis().setLabelPaint(LABEL_2);
+            p.getDomainAxis().setAxisLinePaint(SEP_LIGHT); p.getDomainAxis().setTickLabelFont(sf(Font.PLAIN, 10f));
+            p.getRangeAxis().setTickLabelPaint(LABEL_2);  p.getRangeAxis().setLabelPaint(LABEL_2);
+            p.getRangeAxis().setAxisLinePaint(SEP_LIGHT);  p.getRangeAxis().setTickLabelFont(sf(Font.PLAIN, 10f));
         }
         return chart;
     }
@@ -1110,15 +636,13 @@ private void showNoDbPlaceholder() {
     // ════════════════════════════════════════════════════════════════════════
     // HELPERS
     // ════════════════════════════════════════════════════════════════════════
-
     private JPanel createCard() {
         JPanel card = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // subtle diffuse shadow
                 for (int i = 5; i >= 1; i--) {
-                    g2.setColor(new Color(0,0,0, 5));
+                    g2.setColor(new Color(0,0,0,5));
                     g2.fillRoundRect(i, i+1, getWidth()-i*2, getHeight()-i*2, R+i, R+i);
                 }
                 g2.setColor(CARD_BG);
@@ -1129,36 +653,18 @@ private void showNoDbPlaceholder() {
         card.setOpaque(false);
         card.setBorder(BorderFactory.createCompoundBorder(
             new MacBorder(SEP_LIGHT, R),
-            BorderFactory.createEmptyBorder(14, 16, 14, 16)
-        ));
+            BorderFactory.createEmptyBorder(14, 16, 14, 16)));
         return card;
     }
 
-    private JLabel yearlyTotalLabelRef() {
-        yearlyTotalLabel = new JLabel("RM 0.00"); return yearlyTotalLabel;
-    }
-    private JLabel monthChangeLabelRef() {
-        monthChangeLabel = new JLabel("—"); return monthChangeLabel;
-    }
-    private JLabel averageExpensesLabelRef() {
-        averageExpensesLabel = new JLabel("RM 0.00"); return averageExpensesLabel;
-    }
-    private JLabel currentMonthSpendingLabelRef() {
-        currentMonthSpendingLabel = new JLabel("RM 0.00"); return currentMonthSpendingLabel;
-    }
-
-    private JLabel formLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setFont(sf(Font.PLAIN, 12f));
-        l.setForeground(LABEL_2);
-        l.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return l;
-    }
+    private JLabel yearlyTotalLabelRef()          { yearlyTotalLabel         = new JLabel("RM 0.00"); return yearlyTotalLabel; }
+    private JLabel monthChangeLabelRef()           { monthChangeLabel         = new JLabel("—");       return monthChangeLabel; }
+    private JLabel averageExpensesLabelRef()       { averageExpensesLabel     = new JLabel("RM 0.00"); return averageExpensesLabel; }
+    private JLabel currentMonthSpendingLabelRef()  { currentMonthSpendingLabel= new JLabel("RM 0.00"); return currentMonthSpendingLabel; }
 
     private JLabel smallLabel(String text) {
         JLabel l = new JLabel(text);
-        l.setFont(sf(Font.PLAIN, 12f));
-        l.setForeground(LABEL_2);
+        l.setFont(sf(Font.PLAIN, 12f)); l.setForeground(LABEL_2);
         return l;
     }
 
@@ -1170,53 +676,9 @@ private void showNoDbPlaceholder() {
         return r;
     }
 
-    private JButton buildBlueButton(String text) {
-        JButton btn = new JButton(text) {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isPressed() ? new Color(0x0060CC) : ACCENT);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
-                g2.setFont(getFont()); g2.setColor(Color.WHITE);
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2,
-                    (getHeight()+fm.getAscent()-fm.getDescent())/2);
-                g2.dispose();
-            }
-        };
-        btn.setFont(sf(Font.PLAIN, 13f));
-        btn.setPreferredSize(new Dimension(80, 30));
-        btn.setContentAreaFilled(false); btn.setBorderPainted(false); btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
-
-    private JButton buildGrayButton(String text) {
-        JButton btn = new JButton(text) {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isPressed() ? new Color(0xD0D0D5) : new Color(0xE5E5EA));
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
-                g2.setFont(getFont()); g2.setColor(LABEL);
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(getText(), (getWidth()-fm.stringWidth(getText()))/2,
-                    (getHeight()+fm.getAscent()-fm.getDescent())/2);
-                g2.dispose();
-            }
-        };
-        btn.setFont(sf(Font.PLAIN, 13f));
-        btn.setPreferredSize(new Dimension(80, 30));
-        btn.setContentAreaFilled(false); btn.setBorderPainted(false); btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
-
     private void styleScrollBar(JScrollBar bar) {
         bar.setUI(new BasicScrollBarUI() {
-            @Override protected void configureScrollBarColors() {
-                thumbColor = new Color(0xC6C6C8); trackColor = BG;
-            }
+            @Override protected void configureScrollBarColors() { thumbColor = new Color(0xC6C6C8); trackColor = BG; }
             @Override protected JButton createDecreaseButton(int o) { return zero(); }
             @Override protected JButton createIncreaseButton(int o) { return zero(); }
             JButton zero() { JButton b = new JButton(); b.setPreferredSize(new Dimension(0,0)); return b; }
@@ -1224,7 +686,7 @@ private void showNoDbPlaceholder() {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // MacBorder — hairline rounded border
+    // MacBorder
     // ════════════════════════════════════════════════════════════════════════
     static class MacBorder extends AbstractBorder {
         private final Color color; private final int radius;
