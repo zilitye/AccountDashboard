@@ -365,19 +365,6 @@ setVisible(true);
 
         sidebar.add(nav, BorderLayout.NORTH);
 
-        // ── Bottom: ⓘ About ───────────────────────────────────────────────────
-        JPanel bottom = new JPanel();
-        bottom.setLayout(new BoxLayout(bottom, BoxLayout.Y_AXIS));
-        bottom.setOpaque(false);
-        bottom.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
-
-        // hairline divider
-        bottom.add(buildSidebarDivider());
-        bottom.add(Box.createVerticalStrut(6));
-        bottom.add(buildNavItem("ⓘ", "About", false, () -> showAboutDialog()));
-
-        sidebar.add(bottom, BorderLayout.SOUTH);
-
         return sidebar;
     }
 
@@ -536,87 +523,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
             rows[i].repaint();
         }
         setVisible(true);
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // ABOUT DIALOG
-    // ════════════════════════════════════════════════════════════════════════
-    private void showAboutDialog() {
-        JDialog dlg = new JDialog(this, "About Account Dashboard", true);
-        dlg.setSize(400, 300);
-        dlg.setLocationRelativeTo(this);
-        dlg.setResizable(false);
-
-        JPanel root = new JPanel();
-        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
-        root.setBackground(CARD_BG);
-        root.setBorder(BorderFactory.createEmptyBorder(32, 36, 28, 36));
-
-        JLabel appName = new JLabel("Account Dashboard");
-        appName.setFont(sf(Font.BOLD, 17f));
-        appName.setForeground(LABEL);
-        appName.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel version = new JLabel("Version 1.2.2");
-        version.setFont(sf(Font.PLAIN, 12f));
-        version.setForeground(LABEL_2);
-        version.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // hairline divider
-        JSeparator sep = new JSeparator();
-        sep.setForeground(SEP_LIGHT);
-        sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-
-        JLabel credit = new JLabel(
-            "<html><a href='https://github.com/zilitye/AccountDashboard' " +
-            "style='color:#007AFF;text-decoration:none;'>zilitye/AccountDashboard</a></html>",
-            SwingConstants.CENTER // centers text inside label
-        );
-        credit.setFont(sf(Font.PLAIN, 13f));
-        credit.setForeground(LABEL);
-        credit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        // If parent uses BoxLayout.Y_AXIS:
-        credit.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        credit.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-                try {
-                    Desktop.getDesktop().browse(new java.net.URI("https://github.com/zilitye/AccountDashboard"));
-                } catch (Exception ex) { ex.printStackTrace(); }
-            }
-        });
-
-        String disclaimerText = "<html><center>"
-            + "This application is developed for academic and personal budgeting purposes. "
-            + "All financial data is stored locally. No data is transmitted or shared externally."
-            + "</center></html>";
-        JLabel disclaimer = new JLabel(disclaimerText);
-        disclaimer.setFont(sf(Font.PLAIN, 11.5f));
-        disclaimer.setForeground(LABEL_2);
-        disclaimer.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JButton closeBtn = buildBlueButton("OK");
-        closeBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        closeBtn.setMaximumSize(new Dimension(80, 30));
-        closeBtn.addActionListener(e -> dlg.dispose());
-
-        //root.add(iconCircle);
-        //root.add(Box.createVerticalStrut(12));
-        root.add(appName);
-        root.add(Box.createVerticalStrut(4));
-        root.add(version);
-        root.add(Box.createVerticalStrut(18));
-        root.add(sep);
-        root.add(Box.createVerticalStrut(14));
-        root.add(credit);
-        root.add(Box.createVerticalStrut(8));
-        root.add(disclaimer);
-        root.add(Box.createVerticalStrut(20));
-        root.add(closeBtn);
-
-        dlg.setContentPane(root);
-        dlg.setVisible(true);
     }
 
     // ════════════════════════════════════════════════════════════════════════
