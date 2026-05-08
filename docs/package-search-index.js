@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"chart"},{"l":"com.ex.calculate"}];updateSearchResults();

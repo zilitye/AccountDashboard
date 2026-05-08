@@ -2,146 +2,22 @@ package chart;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.block.BlockBorder;
-import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
-import org.jfree.ui.RectangleEdge;
-
-import java.awt.*;
-//import java.text.DecimalFormat;
 import java.util.Map;
 
-/**
- * Modern Pie Chart with enhanced styling and better visual hierarchy
- * Features: Modern colors, improved labels, better legend placement
- */
 public class ChartPie {
-    
-// Modern Color Palette for pie slices
-    private static final Color[] MODERN_COLORS = {
-        new Color(112, 135, 53),
-        new Color(182, 193, 84),
-        new Color(250, 228, 119),
-        new Color(252, 160, 52),
-        new Color(208, 103, 28),
-        new Color(150, 64, 89),
-        new Color(217, 102, 129),
-        new Color(240, 123, 220),
-        new Color(96, 56, 96),
-
-    };
-
-
-    /**
-     * Create yearly pie chart showing expense distribution by category
-     * @param categoryTotals map of category to total expense
-     * @param year the year displayed
-     * @return styled JFreeChart
-     */
-    public static JFreeChart createYearlyPieChart(Map<String, Double> categoryTotals, int year) {
-        DefaultPieDataset dataset = createDataset(categoryTotals);
-        
-        JFreeChart chart = ChartFactory.createPieChart(
-                "Yearly Expenses by Category - " + year,
-                dataset,
-                true,   // legend
-                true,   // tooltips
-                false   // URLs
-        );
-        
-        stylePieChart(chart);
-        configurePieLegend(chart);
-        return chart;
+    public static JFreeChart createYearlyPieChart(Map<String, Double> data, int year) {
+        return createChart("Yearly Expenses (" + year + ")", data);
     }
 
-    /**
-     * Create monthly pie chart showing expense distribution by category
-     * @param categoryTotals map of category to total expense
-     * @param year the year
-     * @param month the month
-     * @return styled JFreeChart
-     */
-    public static JFreeChart createMonthlyPieChart(Map<String, Double> categoryTotals, int year, int month) {
-        DefaultPieDataset dataset = createDataset(categoryTotals);
-        
-        String monthName = getMonthName(month);
-        JFreeChart chart = ChartFactory.createPieChart(
-                "Monthly Expenses by Category - " + monthName + " " + year,
-                dataset,
-                true,
-                true,
-                false
-        );
-        
-        stylePieChart(chart);
-        configurePieLegend(chart);
-        return chart;
+    public static JFreeChart createMonthlyPieChart(Map<String, Double> data, int year, int month) {
+        return createChart("Monthly Expenses (" + month + "/" + year + ")", data);
     }
 
-    /**
-     * Create dataset from category totals
-     */
-    private static DefaultPieDataset createDataset(Map<String, Double> categoryTotals) {
+    // Consolidated repetitive logic into one clean helper method
+    private static JFreeChart createChart(String title, Map<String, Double> data) {
         DefaultPieDataset dataset = new DefaultPieDataset();
-        for (Map.Entry<String, Double> entry : categoryTotals.entrySet()) {
-            dataset.setValue(entry.getKey(), entry.getValue());
-        }
-        return dataset;
-    }
-
-    /**
-     * Apply modern styling to the pie chart
-     */
-    private static void stylePieChart(JFreeChart chart) {
-        PiePlot plot = (PiePlot) chart.getPlot();
-        chart.getLegend().setFrame(BlockBorder.NONE);
-
-        // Apply modern colors to pie slices
-        int colorIndex = 0;
-        for (Object key : plot.getDataset().getKeys()) {
-            Color color = MODERN_COLORS[colorIndex % MODERN_COLORS.length];
-            plot.setSectionPaint((Comparable<?>) key, color);
-            colorIndex++;
-        }
-        
-        // Styling properties
-        plot.setBackgroundPaint(null);
-        plot.setOutlineVisible(false);
-        
-        // Remove all labels from pie chart - will use legend instead
-        //plot.setLabelGenerator(null);
-        plot.setLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
-        plot.setLabelPaint(new Color(17, 24, 39));
-        // Remove label background, shadow, and outline
-        plot.setLabelBackgroundPaint(null);
-        plot.setLabelShadowPaint(null);
-        plot.setLabelOutlinePaint(null);
-        plot.setLabelOutlineStroke(null);
-        // Remove shadow from pie sections
-        plot.setShadowXOffset(0);
-        plot.setShadowYOffset(0);
-        
-        // Legend properties
-        chart.getLegend().setItemFont(new Font("Segoe UI", Font.PLAIN, 11));
-        
-        // Title properties
-        chart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        chart.getTitle().setPaint(new Color(17, 24, 39));
-    }
-    
-    /**
-     * Configure pie chart legend to display below the chart
-     */
-    private static void configurePieLegend(JFreeChart chart) {
-        chart.getLegend().setPosition(RectangleEdge.BOTTOM);
-    }
-
-    /**
-     * Helper method to convert month number to month name
-     */
-    private static String getMonthName(int month) {
-        String[] months = {"", "January", "February", "March", "April", "May", "June",
-                          "July", "August", "September", "October", "November", "December"};
-        return (month >= 1 && month <= 12) ? months[month] : "Month " + month;
+        data.forEach(dataset::setValue); // One-line population
+        return ChartFactory.createPieChart(title, dataset, true, true, false);
     }
 }
