@@ -1,5 +1,6 @@
-package chart;
+package chart; // Declares that this class belongs to the chart package
 
+// Import JFreeChart classes
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.CategoryPlot;
@@ -7,175 +8,343 @@ import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.block.BlockBorder;
 import org.jfree.data.category.DefaultCategoryDataset;
+
+// Import shape class for data point circles
 import java.awt.geom.Ellipse2D;
 
+// Import Java utility and GUI classes
 import java.awt.*;
 import java.util.Map;
 
 /**
- * Modern Line Chart with enhanced styling and trend visualization
- * Features: Modern colors, smooth lines, improved readability
+ * Class used to create modern line charts
  */
 public class ChartLine {
-    
-    // Modern colors for line charts
-    private static final Color LINE_COLOR_PRIMARY = new Color(59, 130, 246);      // Modern blue
-    private static final Color LINE_COLOR_SECONDARY = new Color(16, 185, 129);    // Modern green
-    private static final Color AXIS_COLOR = new Color(75, 85, 99);                // Medium gray
-    private static final Color GRID_COLOR = new Color(229, 231, 235);             // Light border
-    private static final Stroke LINE_STROKE = new BasicStroke(2.5f);
+
+    // ===== COLORS =====
+
+    // Blue line color
+    private static final Color LINE_COLOR_PRIMARY =
+            new Color(59, 130, 246);
+
+    // Green line color
+    private static final Color LINE_COLOR_SECONDARY =
+            new Color(16, 185, 129);
+
+    // Axis text color
+    private static final Color AXIS_COLOR =
+            new Color(75, 85, 99);
+
+    // Grid line color
+    private static final Color GRID_COLOR =
+            new Color(229, 231, 235);
+
+    // Thickness of line
+    private static final Stroke LINE_STROKE =
+            new BasicStroke(2.5f);
 
     /**
-     * Create line chart showing monthly expense trends
-     * @param monthlyTotals map of month number to total expenses
-     * @param year the year
-     * @return styled JFreeChart
+     * Create monthly expense trend chart
      */
-    public static JFreeChart createMonthlyTrendChart(Map<Integer, Double> monthlyTotals, int year) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    public static JFreeChart createMonthlyTrendChart(
+            Map<Integer, Double> monthlyTotals,
+            int year) {
 
-        for (Map.Entry<Integer, Double> entry : monthlyTotals.entrySet()) {
-            String monthName = getMonthName(entry.getKey());
-            dataset.addValue(entry.getValue(), "Monthly Expenses", monthName);
+        // Create dataset
+        DefaultCategoryDataset dataset =
+                new DefaultCategoryDataset();
+
+        // Loop through monthly data
+        for (Map.Entry<Integer, Double> entry
+                : monthlyTotals.entrySet()) {
+
+            // Convert month number to month name
+            String monthName =
+                    getMonthName(entry.getKey());
+
+            // Add data into dataset
+            dataset.addValue(
+                    entry.getValue(),
+                    "Monthly Expenses",
+                    monthName
+            );
         }
 
-        JFreeChart chart = ChartFactory.createLineChart(
-                "Monthly Expenses Trend - " + year,
-                "Month",
-                "Amount (RM)",
-                dataset
-        );
+        // Create line chart
+        JFreeChart chart =
+                ChartFactory.createLineChart(
+                        "Monthly Expenses Trend - " + year,
+                        "Month",
+                        "Amount (RM)",
+                        dataset
+                );
 
+        // Apply styling
         styleLineChart(chart, false);
+
+        // Enable smooth line settings
         enableSmoothLineRendering(chart);
+
+        // Return chart
         return chart;
     }
 
     /**
-     * Create line chart showing yearly expense trends
-     * @param yearlyTotals map of year to total expenses
-     * @return styled JFreeChart
+     * Create yearly expense trend chart
      */
-    public static JFreeChart createYearlyTrendChart(Map<Integer, Double> yearlyTotals) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    public static JFreeChart createYearlyTrendChart(
+            Map<Integer, Double> yearlyTotals) {
 
-        for (Map.Entry<Integer, Double> entry : yearlyTotals.entrySet()) {
-            dataset.addValue(entry.getValue(), "Yearly Expenses", String.valueOf(entry.getKey()));
+        // Create dataset
+        DefaultCategoryDataset dataset =
+                new DefaultCategoryDataset();
+
+        // Loop through yearly data
+        for (Map.Entry<Integer, Double> entry
+                : yearlyTotals.entrySet()) {
+
+            // Add yearly data into dataset
+            dataset.addValue(
+                    entry.getValue(),
+                    "Yearly Expenses",
+                    String.valueOf(entry.getKey())
+            );
         }
 
-        JFreeChart chart = ChartFactory.createLineChart(
-                "Yearly Expenses Trend",
-                "Year",
-                "Amount (RM)",
-                dataset
-        );
+        // Create chart
+        JFreeChart chart =
+                ChartFactory.createLineChart(
+                        "Yearly Expenses Trend",
+                        "Year",
+                        "Amount (RM)",
+                        dataset
+                );
 
+        // Apply style
         styleLineChart(chart, false);
+
+        // Enable smooth rendering
         enableSmoothLineRendering(chart);
+
+        // Return chart
         return chart;
     }
 
     /**
-     * Create line chart showing category-specific trends
-     * @param monthlyCategoryTotals map of month to category total
-     * @param year the year
-     * @param category the category name
-     * @return styled JFreeChart
+     * Create category trend chart
      */
-    public static JFreeChart createCategoryTrendChart(Map<Integer, Double> monthlyCategoryTotals, 
-                                                      int year, String category) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    public static JFreeChart createCategoryTrendChart(
+            Map<Integer, Double> monthlyCategoryTotals,
+            int year,
+            String category) {
 
-        for (Map.Entry<Integer, Double> entry : monthlyCategoryTotals.entrySet()) {
-            String monthName = getMonthName(entry.getKey());
-            dataset.addValue(entry.getValue(), category, monthName);
+        // Create dataset
+        DefaultCategoryDataset dataset =
+                new DefaultCategoryDataset();
+
+        // Loop through category data
+        for (Map.Entry<Integer, Double> entry
+                : monthlyCategoryTotals.entrySet()) {
+
+            // Convert month number to month name
+            String monthName =
+                    getMonthName(entry.getKey());
+
+            // Add category data into dataset
+            dataset.addValue(
+                    entry.getValue(),
+                    category,
+                    monthName
+            );
         }
 
-        JFreeChart chart = ChartFactory.createLineChart(
-                "Monthly Trend - " + category + " (" + year + ")",
-                "Month",
-                "Amount (RM)",
-                dataset
-        );
+        // Create chart
+        JFreeChart chart =
+                ChartFactory.createLineChart(
+                        "Monthly Trend - " + category + " (" + year + ")",
+                        "Month",
+                        "Amount (RM)",
+                        dataset
+                );
 
+        // Enable smooth rendering
         enableSmoothLineRendering(chart);
+
+        // Apply styling
         styleLineChart(chart, true);
+
+        // Return chart
         return chart;
     }
 
     /**
-     * Apply modern styling to line chart
+     * Apply styling to line chart
      */
-    private static void styleLineChart(JFreeChart chart, boolean isCategorySpecific) {
-        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+    private static void styleLineChart(
+            JFreeChart chart,
+            boolean isCategorySpecific) {
+
+        // Get chart plot
+        CategoryPlot plot =
+                (CategoryPlot) chart.getPlot();
+
+        // Remove legend border
         chart.getLegend().setFrame(BlockBorder.NONE);
-        // Background
+
+        // Remove plot background
         plot.setBackgroundPaint(null);
+
+        // Hide plot border
         plot.setOutlineVisible(false);
-        
-        // Grid lines
+
+        // Set grid line color
         plot.setRangeGridlinePaint(GRID_COLOR);
-        plot.setRangeGridlineStroke(new BasicStroke(0.5f));
-        
-        // Axis styling
-        plot.getDomainAxis().setLabelFont(new Font("Segoe UI", Font.BOLD, 11));
-        plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+
+        // Set grid line thickness
+        plot.setRangeGridlineStroke(
+                new BasicStroke(0.5f));
+
+        // ===== X-AXIS STYLE =====
+
+        // Set X-axis label font
+        plot.getDomainAxis().setLabelFont(
+                new Font("Segoe UI", Font.BOLD, 11));
+
+        // Set X-axis text font
+        plot.getDomainAxis().setTickLabelFont(
+                new Font("Segoe UI", Font.PLAIN, 10));
+
+        // Set X-axis label color
         plot.getDomainAxis().setLabelPaint(AXIS_COLOR);
+
+        // Set X-axis text color
         plot.getDomainAxis().setTickLabelPaint(AXIS_COLOR);
-        
-        plot.getRangeAxis().setLabelFont(new Font("Segoe UI", Font.BOLD, 11));
-        plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+
+        // ===== Y-AXIS STYLE =====
+
+        // Set Y-axis label font
+        plot.getRangeAxis().setLabelFont(
+                new Font("Segoe UI", Font.BOLD, 11));
+
+        // Set Y-axis text font
+        plot.getRangeAxis().setTickLabelFont(
+                new Font("Segoe UI", Font.PLAIN, 10));
+
+        // Set Y-axis label color
         plot.getRangeAxis().setLabelPaint(AXIS_COLOR);
+
+        // Set Y-axis text color
         plot.getRangeAxis().setTickLabelPaint(AXIS_COLOR);
-        // Auto-scale Y-axis to fit data range (start from minimum value, not 0)
+
+        // Auto-scale Y-axis
         if (plot.getRangeAxis() instanceof NumberAxis) {
-            NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+
+            // Convert axis to NumberAxis
+            NumberAxis rangeAxis =
+                    (NumberAxis) plot.getRangeAxis();
+
+            // Do not force axis to start from 0
             rangeAxis.setAutoRangeIncludesZero(false);
         }
-        
-        // 
-        // Renderer (line styling)
-        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
-        
-        // Series paint and stroke
-        renderer.setSeriesPaint(0, isCategorySpecific ? LINE_COLOR_SECONDARY : LINE_COLOR_PRIMARY);
+
+        // ===== LINE STYLE =====
+
+        // Get line renderer
+        LineAndShapeRenderer renderer =
+                (LineAndShapeRenderer) plot.getRenderer();
+
+        // Set line color
+        renderer.setSeriesPaint(
+                0,
+                isCategorySpecific
+                        ? LINE_COLOR_SECONDARY
+                        : LINE_COLOR_PRIMARY
+        );
+
+        // Set line thickness
         renderer.setSeriesStroke(0, LINE_STROKE);
-        
-        // Shape styling (dots on line)
+
+        // Show points on line
         renderer.setSeriesShapesVisible(0, true);
-        Shape shape = new Ellipse2D.Double(-3, -3, 6, 6);
+
+        // Create circle shape for points
+        Shape shape =
+                new Ellipse2D.Double(-3, -3, 6, 6);
+
+        // Apply point shape
         renderer.setSeriesShape(0, shape);
-        
-        // Legend
-        chart.getLegend().setItemFont(new Font("Segoe UI", Font.PLAIN, 11));
-        
-        // Title
-        chart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        chart.getTitle().setPaint(new Color(17, 24, 39));
+
+        // ===== LEGEND STYLE =====
+
+        // Set legend font
+        chart.getLegend().setItemFont(
+                new Font("Segoe UI", Font.PLAIN, 11));
+
+        // ===== TITLE STYLE =====
+
+        // Set title font
+        chart.getTitle().setFont(
+                new Font("Segoe UI", Font.BOLD, 14));
+
+        // Set title color
+        chart.getTitle().setPaint(
+                new Color(17, 24, 39));
     }
 
     /**
-     * Enable smooth line rendering using spline interpolation
+     * Enable smooth line rendering
      */
-    private static void enableSmoothLineRendering(JFreeChart chart) {
-        CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
-        
-        // Enable smooth interpolation for the line
+    private static void enableSmoothLineRendering(
+            JFreeChart chart) {
+
+        // Get chart plot
+        CategoryPlot plot =
+                (CategoryPlot) chart.getPlot();
+
+        // Get renderer
+        LineAndShapeRenderer renderer =
+                (LineAndShapeRenderer) plot.getRenderer();
+
+        // Show points on line
         renderer.setSeriesShapesVisible(0, true);
+
+        // Show line
         renderer.setSeriesLinesVisible(0, true);
-        
-        // Use larger points for better visibility
-        Shape shape = new Ellipse2D.Double(-4, -4, 8, 8);
+
+        // Create larger circle points
+        Shape shape =
+                new Ellipse2D.Double(-4, -4, 8, 8);
+
+        // Apply shape
         renderer.setSeriesShape(0, shape);
     }
 
     /**
-     * Helper method to convert month number to month name
+     * Convert month number into month name
      */
     private static String getMonthName(int month) {
-        String[] months = {"", "January", "February", "March", "April", "May", "June",
-                          "July", "August", "September", "October", "November", "December"};
-        return (month >= 1 && month <= 12) ? months[month] : "Month " + month;
+
+        // Array of month names
+        String[] months = {
+                "",
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December"
+        };
+
+        // Return valid month name
+        // Otherwise return fallback text
+        return (month >= 1 && month <= 12)
+                ? months[month]
+                : "Month " + month;
     }
 }
