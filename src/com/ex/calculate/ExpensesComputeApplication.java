@@ -16,24 +16,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Map;
 
-/**
- * Account Dashboard — macOS Sonoma / Sequoia style.
- *
- * Layout:
- *   ┌──────────────────────────────────────────────────────┐
- *   │  Title bar  (traffic lights · title · toolbar)       │
- *   ├─────────────┬────────────────────────────────────────┤
- *   │             │  stat cards                            │
- *   │  Sidebar    │  charts (2-col)                        │
- *   │  ─ nav      │  category breakdown                    │
- *   │  ─ (glue)   │                                        │
- *   │  ─ ⓘ About  │                                        │
- *   └─────────────┴────────────────────────────────────────┘
- */
 public class ExpensesComputeApplication extends JFrame {
 
     // ── fields ───────────────────────────────────────────────────────────────
@@ -82,7 +67,6 @@ public class ExpensesComputeApplication extends JFrame {
     private static final Color LABEL        = new Color(0x1C1C1E);   // label
     private static final Color LABEL_2      = new Color(0x6E6E73);   // secondaryLabel
     private static final Color LABEL_3      = new Color(0xAEAEB2);   // tertiaryLabel
-    private static final Color LABEL_4      = new Color(0xC7C7CC);   // quaternaryLabel
 
     private static final Color ACCENT       = new Color(0x007AFF);   // systemBlue
     private static final Color INDIGO       = new Color(0x5856D6);   // systemIndigo
@@ -184,26 +168,6 @@ setVisible(true);
         left.setOpaque(false);
         left.setPreferredSize(new Dimension(SIDEBAR_W, 50));
         left.setBorder(BorderFactory.createEmptyBorder(0, 14, 0, 0));
-
-        // Traffic-light circles
-        /*JPanel lights = new JPanel(null) {
-            @Override public Dimension getPreferredSize() { return new Dimension(52, 50); }
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                Color[] c = {new Color(0xFF5F57), new Color(0xFEBC2E), new Color(0x28C840)};
-                for (int i = 0; i < 3; i++) {
-                    int x = i * 18;
-                    int y = (getHeight() - 12) / 2;
-                    g2.setColor(c[i]);
-                    g2.fillOval(x, y, 12, 12);
-                    g2.setColor(new Color(255,255,255,55));
-                    g2.fillOval(x+2, y+1, 5, 4);
-                }
-                g2.dispose();
-            }
-        };
-        lights.setOpaque(false);*/
 
         JLabel title = new JLabel("Account Dashboard");
         title.setFont(sf(Font.BOLD, 13f));
@@ -433,11 +397,6 @@ setVisible(true);
         return wrapper;
     }
 
-    /** Nav item without custom click action (no-op hover only) */
-    private JPanel buildNavItem(String icon, String label, boolean active) {
-        return buildNavItem(icon, label, active, null);
-    }
-
     /** Nav item with optional click action */
 private JPanel buildNavItem(String icon, String label, boolean active, Runnable onClick) {
 
@@ -592,25 +551,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
         root.setBackground(CARD_BG);
         root.setBorder(BorderFactory.createEmptyBorder(32, 36, 28, 36));
-
-        // App icon placeholder
-        /*JPanel iconCircle = new JPanel() {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(0x007AFF22, true));
-                g2.fillOval(0, 0, 56, 56);
-                g2.setColor(ACCENT);
-                g2.setFont(sf(Font.PLAIN, 26f));
-                FontMetrics fm = g2.getFontMetrics();
-                String ic = "◈";
-                g2.drawString(ic, (56 - fm.stringWidth(ic))/2, (56 + fm.getAscent() - fm.getDescent())/2);
-                g2.dispose();
-            }
-            @Override public Dimension getPreferredSize() { return new Dimension(56,56); }
-        };
-        iconCircle.setOpaque(false);
-        iconCircle.setAlignmentX(Component.CENTER_ALIGNMENT);*/
 
         JLabel appName = new JLabel("Account Dashboard");
         appName.setFont(sf(Font.BOLD, 17f));
@@ -813,20 +753,6 @@ lbl.setForeground(active ? Color.WHITE : LABEL);
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
         inner.setBackground(BG);
         inner.setBorder(BorderFactory.createEmptyBorder(22, 22, 22, 22));
-
-        // Page title
-        /*JLabel pageTitle = new JLabel("Overview");
-        pageTitle.setFont(sf(Font.BOLD, 20f));
-        pageTitle.setForeground(LABEL);
-        pageTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        inner.add(pageTitle);*/
-
-        /*JLabel pageSub = new JLabel("Your spending at a glance");
-        pageSub.setFont(sf(Font.PLAIN, 13f));
-        pageSub.setForeground(LABEL_2);
-        pageSub.setAlignmentX(Component.LEFT_ALIGNMENT);
-        inner.add(pageSub);
-        inner.add(Box.createVerticalStrut(20));*/
 
         // ── Row 1: 4 stat cards ───────────────────────────────────────────────
         JPanel statsRow = new JPanel(new GridLayout(1, 4, 12, 0));
