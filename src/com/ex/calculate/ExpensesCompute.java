@@ -1,202 +1,301 @@
 package com.ex.calculate;
+// Package name
 
 import chart.SQLConnection;
+// Import database connection class
+
 import java.io.Serializable;
+// Allows object serialization
+
 import java.sql.*;
+// Import SQL classes
+
 import java.util.HashMap;
 import java.util.Map;
+// Import Map and HashMap
 
 public class ExpensesCompute implements Serializable {
+    // Class for expense calculations
+
     private static final long serialVersionUID = 1L;
+    // Serialization version ID
 
-    // Insert new expense into DB
+    // ===== Add Expense =====
+
     public void addExpense(int year, int month, String category, double amount) {
-        // 1. Get connection OUTSIDE the try block
+
         Connection conn = SQLConnection.getInstance().getConnection();
+        // Get database connection
+
         if (conn == null) {
-            System.err.println("[ExpensesCompute] Cannot add expense: DB offline");
+            // Check if DB connection failed
+
+            System.err.println("Database offline");
+            // Print error message
+
             return;
+            // Stop method
         }
 
-        String sql = "INSERT INTO expenses(year, month, category, amount) VALUES(?,?,?,?)";
-        
-        // 2. Only put the PreparedStatement inside the try block
+        String sql =
+                "INSERT INTO expenses(year, month, category, amount) VALUES(?,?,?,?)";
+        // SQL insert query
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            // Create prepared statement
+
             ps.setInt(1, year);
+            // Set year value
+
             ps.setInt(2, month);
+            // Set month value
+
             ps.setString(3, category);
+            // Set category value
+
             ps.setDouble(4, amount);
+            // Set amount value
+
             ps.executeUpdate();
+            // Execute insert query
+
         } catch (SQLException e) {
+
             e.printStackTrace();
+            // Print SQL error
         }
     }
 
-    // Yearly total
+    // ===== Get Yearly Total =====
+
     public double getYearlyTotal(int year) {
-        double total = 0;
-        Connection conn = SQLConnection.getInstance().getConnection();
-        if (conn == null) return 0; // Return 0 if offline
 
-        String sql = "SELECT SUM(amount) FROM expenses WHERE year=?";
+        double total = 0;
+        // Store total amount
+
+        Connection conn = SQLConnection.getInstance().getConnection();
+        // Get database connection
+
+        if (conn == null)
+            return 0;
+        // Return 0 if DB offline
+
+        String sql =
+                "SELECT SUM(amount) FROM expenses WHERE year=?";
+        // SQL query
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, year);
+            // Set year
+
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) total = rs.getDouble(1);
+                // Execute query
+
+                if (rs.next())
+                    total = rs.getDouble(1);
+                // Get total amount
             }
+
         } catch (SQLException e) {
+
             e.printStackTrace();
+            // Print SQL error
         }
+
         return total;
+        // Return yearly total
     }
 
-    // Monthly total
-    public double getMonthlyTotal(int year, int month) {
-        double total = 0;
-        Connection conn = SQLConnection.getInstance().getConnection();
-        if (conn == null) return 0;
+    // ===== Get Monthly Total =====
 
-        // Query all months for the year, then filter in Java
-        String sql = "SELECT month, SUM(amount) as monthly_sum FROM expenses WHERE year=? GROUP BY month";
+    public double getMonthlyTotal(int year, int month) {
+
+        double total = 0;
+        // Store monthly total
+
+        Connection conn = SQLConnection.getInstance().getConnection();
+        // Get DB connection
+
+        if (conn == null)
+            return 0;
+        // Return 0 if offline
+
+        String sql =
+                "SELECT month, SUM(amount) FROM expenses WHERE year=? GROUP BY month";
+        // SQL query
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, year);
-            System.out.println("[ExpensesCompute] Executing: " + sql + " with year=" + year + " (will filter for month=" + month + " in Java)");
-            
+            // Set year
+
             try (ResultSet rs = ps.executeQuery()) {
+
                 while (rs.next()) {
-                    // Handle both NUMBER and VARCHAR2 month columns
-                    int dbMonth;
-                    try {
-                        dbMonth = rs.getInt(1);
-                    } catch (Exception e) {
-                        String monthStr = rs.getString(1);
-                        dbMonth = convertMonthNameToNumber(monthStr);
-                    }
-                    
+                    // Loop through results
+
+                    int dbMonth = rs.getInt(1);
+                    // Get month from DB
+
                     if (dbMonth == month) {
+                        // Check matching month
+
                         total = rs.getDouble(2);
-                        System.out.println("[ExpensesCompute] Found month " + month + " with total: " + total);
+                        // Get total amount
+
                         break;
+                        // Stop loop
                     }
                 }
             }
-            System.out.println("[ExpensesCompute] Monthly total result for month " + month + ": " + total);
+
         } catch (SQLException e) {
-            System.err.println("[ExpensesCompute] ERROR in getMonthlyTotal for year=" + year + ", month=" + month);
+
             e.printStackTrace();
+            // Print SQL error
         }
+
         return total;
+        // Return monthly total
     }
 
-    // Totals by category (works for yearly or monthly)
+    // ===== Totals By Category =====
+
     public Map<String, Double> getTotalsByCategory(int year, Integer month) {
+
         Map<String, Double> totals = new HashMap<>();
+        // Store category totals
+
         Connection conn = SQLConnection.getInstance().getConnection();
-        if (conn == null) return totals; // Return empty map if offline
+        // Get DB connection
+
+        if (conn == null)
+            return totals;
+        // Return empty map if offline
 
         String sql;
+        // SQL query variable
+
         if (month != null) {
-            // Get totals for all months, will filter by specific month in Java
-            sql = "SELECT category, month, SUM(amount) as category_sum FROM expenses WHERE year=? GROUP BY category, month ORDER BY month";
+
+            sql =
+                    "SELECT category, month, SUM(amount) FROM expenses WHERE year=? GROUP BY category, month";
+            // Monthly category totals
+
         } else {
-            sql = "SELECT category, SUM(amount) as category_sum FROM expenses WHERE year=? GROUP BY category";
+
+            sql =
+                    "SELECT category, SUM(amount) FROM expenses WHERE year=? GROUP BY category";
+            // Yearly category totals
         }
-        
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, year);
-            
-            if (month != null) {
-                System.out.println("[ExpensesCompute] Executing: " + sql + " with year=" + year + " (will filter for month=" + month + " in Java)");
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        String category = rs.getString(1);
-                        // Handle both NUMBER and VARCHAR2 month columns
-                        int dbMonth;
-                        try {
-                            dbMonth = rs.getInt(2);
-                        } catch (Exception e) {
-                            String monthStr = rs.getString(2);
-                            dbMonth = convertMonthNameToNumber(monthStr);
-                        }
-                        
+            // Set year
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+
+                    String category = rs.getString(1);
+                    // Get category name
+
+                    if (month != null) {
+
+                        int dbMonth = rs.getInt(2);
+                        // Get DB month
+
                         if (dbMonth == month) {
-                            double amount = rs.getDouble(3);
-                            totals.put(category, amount);
+
+                            totals.put(category, rs.getDouble(3));
+                            // Save category total
                         }
-                    }
-                }
-            } else {
-                System.out.println("[ExpensesCompute] Executing: " + sql + " with year=" + year);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        totals.put(rs.getString(1), rs.getDouble(2));
+
+                    } else {
+
+                        totals.put(category, rs.getDouble(2));
+                        // Save yearly category total
                     }
                 }
             }
-            System.out.println("[ExpensesCompute] Category totals result: " + totals);
+
         } catch (SQLException e) {
-            System.err.println("[ExpensesCompute] ERROR in getTotalsByCategory for year=" + year + ", month=" + month);
+
             e.printStackTrace();
+            // Print SQL error
         }
+
         return totals;
+        // Return totals map
     }
 
-    // Average monthly expenses
+    // ===== Average Monthly Expense =====
+
     public double getAverageMonthlyExpenses(int year) {
+
         return getYearlyTotal(year) / 12.0;
+        // Calculate average monthly expense
     }
 
-    // Month-to-month comparison percentage
+    // ===== Compare Two Months =====
+
     public double getMonthComparison(int year, int month1, int month2) {
+
         double total1 = getMonthlyTotal(year, month1);
+        // Get first month total
+
         double total2 = getMonthlyTotal(year, month2);
-        if (total1 == 0) return 0;
+        // Get second month total
+
+        if (total1 == 0)
+            return 0;
+        // Avoid division by zero
+
         return ((total2 - total1) / total1) * 100.0;
+        // Return percentage difference
     }
+
+    // ===== Get All Monthly Totals =====
 
     public Map<Integer, Double> getMonthlyTotals(int year) {
-        Map<Integer, Double> totals = new HashMap<>();
-        Connection conn = SQLConnection.getInstance().getConnection();
-        if (conn == null) return totals;
 
-        String sql = "SELECT month, SUM(amount) FROM expenses WHERE year=? GROUP BY month ORDER BY month";
+        Map<Integer, Double> totals = new HashMap<>();
+        // Store monthly totals
+
+        Connection conn = SQLConnection.getInstance().getConnection();
+        // Get DB connection
+
+        if (conn == null)
+            return totals;
+        // Return empty map if offline
+
+        String sql =
+                "SELECT month, SUM(amount) FROM expenses WHERE year=? GROUP BY month ORDER BY month";
+        // SQL query
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, year);
+            // Set year
+
             try (ResultSet rs = ps.executeQuery()) {
+
                 while (rs.next()) {
-                    // Handle both NUMBER and VARCHAR2 month columns
-                    int month;
-                    try {
-                        month = rs.getInt(1);
-                    } catch (Exception e) {
-                        // If it's VARCHAR2, convert month name to number
-                        String monthStr = rs.getString(1);
-                        month = convertMonthNameToNumber(monthStr);
-                    }
-                    totals.put(month, rs.getDouble(2));
+
+                    totals.put(rs.getInt(1), rs.getDouble(2));
+                    // Store month and total
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return totals;
-    }
 
-    private int convertMonthNameToNumber(String monthName) {
-        switch (monthName.toLowerCase()) {
-            case "january": case "jan": return 1;
-            case "february": case "feb": return 2;
-            case "march": case "mar": return 3;
-            case "april": case "apr": return 4;
-            case "may": return 5;
-            case "june": case "jun": return 6;
-            case "july": case "jul": return 7;
-            case "august": case "aug": return 8;
-            case "september": case "sep": return 9;
-            case "october": case "oct": return 10;
-            case "november": case "nov": return 11;
-            case "december": case "dec": return 12;
-            default: return Integer.parseInt(monthName); // fallback for numeric strings
+        } catch (SQLException e) {
+
+            e.printStackTrace();
+            // Print SQL error
         }
+
+        return totals;
+        // Return monthly totals
     }
 }
