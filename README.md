@@ -24,10 +24,10 @@ Account Dashboard is a Java application that combines JavaBeans, Swing, and MySQ
 
 Run demo with `java -jar AccountDashboard.jar` (or double‑click it). Requires Java 8 or newer.
 
-![demo](demo.png)
+![demo](media\graph2.png)
 
 ## Sequence Diagram
-![demo2](sequenceDiagram.png)
+![sequenceDiagram](media\sequenceDiagram.png)
 
 ## JavaDoc
 ```
